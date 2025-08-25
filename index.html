@@ -1,156 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mathieu Helfter | Postdoc, IST Austria</title>
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f9f7fc;
-      color: #333;
-      margin: 0; padding: 0;
-      line-height: 1.6;
-    }
-    nav {
-      background: #4b3b85;
-      padding: 0.7em 2em;
-      text-align: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    nav a {
-      color: white; margin: 0 1em;
-      text-decoration: none; font-weight: 500;
-    }
-    nav a:hover { text-decoration: underline; }
-    header {
-      background-color: #e6def6;
-      padding: 2em;
-      display: flex; align-items: center; justify-content: center;
-      gap: 2em;
-    }
-    header img {
-      border-radius: 50%;
-      width: 160px; height: 160px;
-      object-fit: cover;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    header .intro { max-width: 600px; }
-    header h1 {
-      margin: 0; font-size: 2em;
-      color: #4b3b85;
-    }
-    header p { margin: 0.5em 0; font-size: 1.1em; }
+<style>
+  .publication-list {
+    margin-top: 1em;
+  }
+  .publication {
+    margin-bottom: 1.2em;
+    padding-bottom: 0.8em;
+    border-bottom: 1px solid #ddd;
+  }
+  .publication strong {
+    color: #4b3b85;
+  }
+  .pub-links {
+    font-size: 0.9em;
+  }
+  .pub-links a {
+    margin-right: 0.8em;
+    color: #4b3b85;
+  }
+</style>
 
-    main {
-      padding: 2em;
-      max-width: 1000px;
-      margin: auto;
-    }
+<section id="publications">
+  <h2>Selected Publications</h2>
+  <div class="publication-list">
 
-    h2 {
-      color: #4b3b85;
-      margin-top: 1.5em;
-      border-bottom: 2px solid #d4c6f2;
-      padding-bottom: 0.3em;
-    }
-
-    .publications {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1em;
-      margin-top: 1em;
-    }
-    .publication {
-      background: white;
-      padding: 1em;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      transition: transform 0.2s;
-    }
-    .publication:hover { transform: translateY(-3px); }
-    .publication strong { color: #4b3b85; }
-
-    .links, .contact {
-      margin-top: 2em;
-      font-size: 1em;
-      background: #f0ebfa;
-      padding: 1em;
-      border-radius: 8px;
-    }
-
-    a { color: #4b3b85; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-
-<nav>
-  <a href="#interests">Research Interests</a>
-  <a href="#publications">Publications</a>
-  <a href="#links">Links</a>
-  <a href="#contact">Contact</a>
-</nav>
-
-<header>
-  <img src="path-to-your-photo.jpg" alt="Mathieu Helfter">
-  <div class="intro">
-    <h1>Mathieu Helfter</h1>
-    <p>Postdoctoral Researcher, Kaloshin Group</p>
-    <p>Institute of Science and Technology Austria (ISTA)</p>
-  </div>
-</header>
-
-<main>
-  <section id="interests">
-    <h2>Research Interests</h2>
-    <p>Dynamical systems, dimensions and scales in metric spaces, geodesic flows, renormalization of diffeomorphisms, geometric measure theory.</p>
-  </section>
-
-  <section id="publications">
-    <h2>Publications</h2>
-    <div class="publications">
-      <div class="publication">
-        3. <strong>On Cantor sets with arbitrary Hausdorff and packing measures</strong><br>
-        Preprint (Feb 2025).<br>
-        <a href="https://arxiv.org/abs/2502.09643" target="_blank">arXiv</a> :contentReference[oaicite:2]{index=2}
-      </div>
-      <div class="publication">
-        2. <strong>Scales</strong><br>
-        Mathematische Zeitschrift, 2025. <em>Published version</em>.<br>
-        <a href="https://doi.org/10.1007/s00209-025-03719-5" target="_blank">DOI</a> •
-        <a href="https://arxiv.org/abs/2206.05231" target="_blank">arXiv</a> :contentReference[oaicite:3]{index=3}
-      </div>
-      <div class="publication">
-        1. <strong>Every diffeomorphism is a total renormalization of a close to identity map</strong><br>
-        with P. Berger and N. Gourmelon.<br>
-        Inventiones mathematicae, 2025. <em>Published version</em>.<br>
-        <a href="https://doi.org/10.1007/s00222-024-01305-w" target="_blank">DOI</a>
-      </div>
+    <div class="publication">
+      <strong>3. On Cantor sets with arbitrary Hausdorff and packing measures</strong><br>
+      Preprint (Feb 2025).<br>
+      <span class="pub-links">
+        <a href="https://arxiv.org/abs/2502.09643" target="_blank">arXiv</a>
+      </span>
     </div>
-  </section>
 
-  <section id="links" class="links">
-    <h2>Links</h2>
-    <p>
-      <a href="CV.pdf" target="_blank">Download CV (PDF)</a> •
-      <a href="https://orcid.org/0000-0002-XXXX-XXXX" target="_blank">ORCID</a> •
-      <a href="https://scholar.google.com/citations?hl=en&user=J4V-EhoAAAAJ" target="_blank">Google Scholar</a> •
-      <a href="https://www.researchgate.net/profile/Mathieu-Helfter" target="_blank">ResearchGate</a>
-    </p>
-  </section>
+    <div class="publication">
+      <strong>2. Scales</strong><br>
+      <em>Mathematische Zeitschrift</em>, 2025.<br>
+      <span class="pub-links">
+        <a href="https://doi.org/10.1007/s00209-025-03719-5" target="_blank">DOI</a>
+        <a href="https://arxiv.org/abs/2206.05231" target="_blank">arXiv</a>
+      </span>
+    </div>
 
-  <section id="contact" class="contact">
-    <h2>Contact</h2>
-    <p>Email: <a href="mailto:Mathieu.Helfter@ist.ac.at">Mathieu.Helfter ' at ' ist.ac.at</a></p>
-    <p>Address:<br>
-       Institute of Science and Technology Austria (ISTA)<br>
-       Am Campus 1<br>
-       3400 Klosterneuburg, Austria
-    </p>
-  </section>
-</main>
+    <div class="publication">
+      <strong>1. Every diffeomorphism is a total renormalization of a close to identity map</strong><br>
+      with P. Berger and N. Gourmelon.<br>
+      <em>Inventiones mathematicae</em>, 2025.<br>
+      <span class="pub-links">
+        <a href="https://doi.org/10.1007/s00222-024-01305-w" target="_blank">DOI</a>
+      </span>
+    </div>
 
-</body>
-</html>
+  </div>
+</section>
