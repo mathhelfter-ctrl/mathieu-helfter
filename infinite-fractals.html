@@ -5,17 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="An upcoming interactive introduction to fractals and multifractals in infinite dimensions.">
   <title>Infinite-dimensional fractals | Mathieu Helfter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="assets/scripts/mathjax-config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
-  <details class="site-menu">
-    <summary aria-label="Main navigation"><span class="menu-icon" aria-hidden="true"></span>Menu</summary>
-    <nav aria-label="Main navigation">
+  <aside class="site-sidebar">
+    <a class="site-name" href="index.html">Mathieu<br>Helfter</a>
+    <p class="site-role">Mathematician<br>ISTA, Austria</p>
+    <nav class="site-navigation" aria-label="Main navigation">
       <a href="index.html">Welcome</a>
       <a href="research.html">Research</a>
+      <a href="seminars.html">Seminars</a>
       <a href="contact.html">Contact &amp; links</a>
     </nav>
-  </details>
+    <p class="sidebar-footer">Dynamical systems, probability, and geometry.</p>
+  </aside>
 
   <main class="page-content module-page">
     <header class="page-heading">
@@ -31,7 +39,7 @@
       <select id="multifractal-gamma" disabled></select>
       <label for="multifractal-n">Coordinate cutoff N:</label>
       <select id="multifractal-n" disabled></select>
-      <span id="multifractal-status" aria-live="polite">Loading precomputed data…</span>
+      <span id="multifractal-status" aria-live="polite">Loading data…</span>
     </section>
 
     <section class="module-panels" aria-label="Fractal-module displays">
@@ -43,7 +51,7 @@
 
       <article class="module-panel">
         <h2>Multifractal spectrum</h2>
-        <canvas id="spectrum-canvas" role="img" aria-label="Precomputed multifractal spectrum for the selected product measure"></canvas>
+        <canvas id="spectrum-canvas" role="img" aria-label="Multifractal spectrum for the selected product measure"></canvas>
         <p id="spectrum-readout" class="plot-readout">The marker corresponds to the typical digit frequency q = p.</p>
       </article>
     </section>
@@ -52,8 +60,17 @@
 
     <section>
       <h2>The model behind the display</h2>
-      <p>For γ &gt; 0, let K<sub>γ</sub> = {(n<sup>-γ</sup>ε<sub>n</sub>)<sub>n</sub> : ε<sub>n</sub> ∈ {0, 1}} in c<sub>0</sub>, with the supremum norm. At depth N, there are 2<sup>N</sup> cylinders at radius r<sub>N</sub> = (N + 1)<sup>-γ</sup>; consequently, the corresponding power-law dimension grows without bound.</p>
-      <p>For the product measure μ<sub>p</sub>, the displayed spectrum is exact for this model: α<sub>p</sub>(q) = -q log p - (1 - q) log(1 - p), while f<sub>p</sub>(α<sub>p</sub>(q)) is the binary entropy of q. This is a model-specific description, not a universal representation of infinite-dimensional fractals.</p>
+      <p>For \(\gamma&gt;0\), let</p>
+      \[
+        K_\gamma=\{(n^{-\gamma}\varepsilon_n)_n:\varepsilon_n\in\{0,1\}\}\subset c_0,
+      \]
+      <p>with the supremum norm. At depth \(N\), there are \(2^N\) cylinders at radius \(r_N=(N+1)^{-\gamma}\); consequently, the corresponding power-law dimension grows without bound.</p>
+      <p>For the product measure \(\mu_p\), the displayed spectrum is exact for this model:</p>
+      \[
+        \alpha_p(q)=-q\log p-(1-q)\log(1-p),
+        \qquad f_p(\alpha_p(q))=-q\log q-(1-q)\log(1-q).
+      \]
+      <p>This is a model-specific description, not a universal representation of infinite-dimensional fractals.</p>
       <a class="back-link" href="index.html#learn">← Back to learning</a>
     </section>
   </main>

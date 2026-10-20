@@ -5,17 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Mathieu Helfter, postdoctoral researcher in mathematics at ISTA.">
   <title>Mathieu Helfter | Mathematics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="assets/scripts/mathjax-config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
-<body>
-  <details class="site-menu">
-    <summary aria-label="Main navigation"><span class="menu-icon" aria-hidden="true"></span>Menu</summary>
-    <nav aria-label="Main navigation">
+<body class="has-hero">
+  <aside class="site-sidebar">
+    <a class="site-name" href="index.html">Mathieu<br>Helfter</a>
+    <p class="site-role">Mathematician<br>ISTA, Austria</p>
+    <nav class="site-navigation" aria-label="Main navigation">
       <a href="index.html" aria-current="page">Welcome</a>
       <a href="research.html">Research</a>
+      <a href="seminars.html">Seminars</a>
       <a href="contact.html">Contact &amp; links</a>
     </nav>
-  </details>
+    <p class="sidebar-footer">Dynamical systems, probability, and geometry.</p>
+  </aside>
 
   <header class="hero">
     <div class="hero-inner">
@@ -30,17 +38,21 @@
 
   <main class="page-content">
     <section id="learn" aria-labelledby="learn-heading">
-      <h2 id="learn-heading">Interactive content</h2>
-      <p> I will update interactive modules together with short explanations to give visual entry points into ideas connected with my research. Here is the first one !</p>
+      <h2 id="learn-heading">Learn more playfully</h2>
+      <p>These short interactive modules give visual entry points into ideas connected with my research.</p>
 
       <div class="learn-grid">
         <article class="learn-card">
-          <h3>The standard map: KAM curves and its Mather's β-function</h3>
-          <p>Explore the effect of the standard-map parameter on a phase portrait and a numerical approximation of Mather's β-function.</p>
-          <a class="button-link" href="standard-map.html">Interact</a>
+          <h3>The standard map: KAM curves and Mather's \(\beta\)-function</h3>
+          <p>Explore the effect of the standard-map parameter on a phase portrait and on a numerical approximation of Mather's β-function.</p>
+          <a class="button-link" href="standard-map.html">Learn more playfully</a>
         </article>
 
-
+        <article class="learn-card">
+          <h3>Fractals and multifractals in infinite dimensions</h3>
+          <p>Explore cylinder projections, product measures, and scale-dependent quantities: tools that replace a single ordinary dimension in infinite-dimensional settings.</p>
+          <a class="button-link" href="infinite-fractals.html">Learn more playfully</a>
+        </article>
       </div>
     </section>
   </main>
