@@ -332,14 +332,19 @@ h2 {
 }
 
 .module-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.8rem 1.2rem;
+  display: grid;
+  gap: 0.8rem;
   padding: 1rem 1.2rem;
   border: 1px solid var(--line);
   border-radius: 0.75rem;
   background: var(--surface);
+}
+
+.parameter-control {
+  display: grid;
+  grid-template-columns: max-content minmax(12rem, 1fr);
+  align-items: center;
+  gap: 1rem;
 }
 
 .module-controls label {
@@ -348,8 +353,19 @@ h2 {
 }
 
 .module-controls input[type="range"] {
-  width: min(100%, 24rem);
+  width: 100%;
   accent-color: var(--purple);
+}
+
+.module-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 1.8rem;
+}
+
+.module-actions #standard-map-status:empty {
+  display: none;
 }
 
 .module-controls select {
@@ -370,6 +386,11 @@ h2 {
   cursor: pointer;
   font: inherit;
   font-weight: 700;
+}
+
+.text-button--compact {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.86rem;
 }
 
 .text-button:hover {
@@ -465,5 +486,10 @@ footer {
   .information-grid,
   .module-panels {
     grid-template-columns: 1fr;
+  }
+
+  .parameter-control {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
 }
