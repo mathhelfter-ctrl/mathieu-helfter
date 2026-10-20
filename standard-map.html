@@ -55,22 +55,27 @@
       </article>
     </section>
 
-    <section>
+     <section>
       <h2>A short explanation</h2>
-      <p>The sliders choose the two-frequency potential \(V_{K,\varepsilon}\). Its derivative is the kick received by the momentum:</p>
+      <p>  We consider a potential \(V\) of the form:</p>
       \[
-        V_{K,\varepsilon}(x)=-\frac{K}{2\pi}\cos(2\pi x)-\frac{\varepsilon}{10\pi}\cos(10\pi x),
-        \qquad y'=y+V'_{K,\varepsilon}(x),\quad x'=x+y'\pmod1.
+        V (x)=-\frac{K}{2\pi}\cos(2\pi x)-\frac{\varepsilon}{10\pi}\cos(10\pi x). 
       \]
-      <p>For a general potential \(V\), \(\frac12(x_{n+1}-x_n)^2+V(x_n)\) is the one-step action. The function \(\beta_V(\omega)\) records the smallest average action among orbits with average turn number \(\omega\):</p>
+      <p> Move the sliders to move parameters \(K\) and \(\varepsilon\). </p>
+      <p> The corresponding dynamics are given by the 2D map </p>
+      \[   f( x,y) =  ( x + y + V'(x)  \pmod1  , y + V'(x) )  . 
+      \]
+      <p>For a general potential \(V\), the function \(\beta_V(\omega)\) records the smallest average action among orbits with rotation number \(\omega\):</p>
       \[
         \beta_V\!\left(\frac pq\right)=\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
         \left[\frac12(x_{n+1}-x_n)^2+V(x_n)\right].
       \]
-      <p>The graph shows \(\beta_V-\beta_0\), where \(\beta_0(\omega)=\frac12\omega^2\), to isolate the effect of the potential. The solid curve is the strictly convex fit to the finite-period samples; the dashed horizontal line is the unforced case \(V=0\). Retrieving \(V\) from \(\beta_V\) is explored in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
+       <p> Can one deduce \(V\) from \(\beta\) ? 
+      <p> This inverse problem in the spirit of Kac's celebrated question "Can one hear the shape of a drum?" is treated in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
       <a class="back-link" href="index.html#learn">← Back to learning</a>
     </section>
   </main>
+
 
   <footer>Mathieu Helfter · Institute of Science and Technology Austria</footer>
   <script src="assets/scripts/standard-map.js"></script>
