@@ -12,12 +12,17 @@ import json
 import math
 from pathlib import Path
 
+import numpy as np
+from PIL import Image
+
 
 OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "data" / "standard-map"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-K_VALUES = [round(index / 8, 3) for index in range(9)]
-EPSILON_VALUES = [round(index * 0.1 / 8, 4) for index in range(9)]
+# These ranges show the passage from visible KAM curves through resonant
+# layers to clear breakup, without spending most of the slider in broad chaos.
+K_VALUES = [round(index * 0.04, 2) for index in range(9)]
+EPSILON_VALUES = [round(index * 0.001, 3) for index in range(9)]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
@@ -26,6 +31,26 @@ SOLVER_TOLERANCE = 1e-7
 # rotation number. This small positive floor makes the displayed discrete
 # curve strictly convex while moving it as little as possible in L2.
 STRICT_CONVEX_CURVATURE = 1e-8
+
+# Phase portraits follow one fixed vertical section, as in the original
+# five-panel renderer. They are rasterised once into static image sheets.
+PHASE_ITERATIONS = 6_000
+PHASE_TOTAL_CURVES = 64
+PHASE_OUTER_SEED = 0.30
+PHASE_R_MIN = -0.30
+PHASE_R_MAX = 0.30
+PHASE_PANEL_WIDTH = 512
+PHASE_PANEL_HEIGHT = 512
+PHASE_COLOURS = np.array(
+    (
+        (196, 39, 69),
+        (170, 35, 80),
+        (106, 36, 91),
+        (68, 39, 95),
+        (27, 55, 133),
+    ),
+    dtype=np.uint8,
+)
 
 
 def rounded(value: float, digits: int = 7) -> float:
@@ -277,79 +302,115 @@ def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
     return best_action / PERIOD, best_residual
 
 
-def phase_portrait(k: float, epsilon: float) -> dict[str, object]:
-    trajectories: list[list[float]] = []
-    initial_y_values: list[float] = []
-    y_window = [-1.25, 1.25]
+def phase_palette(count: int) -> np.ndarray:
+    """Red through plum to deep blue, indexed by the starting momentum."""
+    positions = np.linspace(0, 1, count)
+    colour_positions = np.linspace(0, 1, len(PHASE_COLOURS))
+    return np.column_stack(
+        [np.interp(positions, colour_positions, PHASE_COLOURS[:, channel]) for channel in range(3)]
+    ).astype(np.uint8)
 
-    if k == 0 and epsilon == 0:
-        for y in [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1]:
-            trajectories.append([coordinate for x in range(21) for coordinate in (x / 20, y)])
-            initial_y_values.append(y)
-        return {
-            "trajectories": trajectories,
-            "initialY": initial_y_values,
-            "yWindow": y_window,
-            "transient": 0,
-            "displayedIterations": 20,
-            "trajectoryCount": len(trajectories),
-        }
 
-    x_seeds = 10
-    y_seeds = [-0.6, -0.3, 0, 0.3, 0.6]
-    transient = 50
-    displayed_iterations = 220
+def rasterize_phase_panel(k: float, epsilon: float) -> Image.Image:
+    """Render a dense KAM portrait from one uniform family of initial points."""
+    theta = np.full(PHASE_TOTAL_CURVES, 0.5, dtype=np.float64)
+    r = np.linspace(-PHASE_OUTER_SEED, PHASE_OUTER_SEED, PHASE_TOTAL_CURVES)
+    theta_history = np.empty((PHASE_ITERATIONS, PHASE_TOTAL_CURVES), dtype=np.float32)
+    r_history = np.empty((PHASE_ITERATIONS, PHASE_TOTAL_CURVES), dtype=np.float32)
 
-    for x_index in range(x_seeds):
-        for initial_y in y_seeds:
-            x = (x_index + 0.5) / x_seeds
-            y = initial_y
-            trajectory: list[float] = []
-            for n in range(transient + displayed_iterations):
-                y += k * math.sin(TWO_PI * x) + epsilon * math.sin(5 * TWO_PI * x)
-                x %= 1
-                x = (x + y) % 1
-                if n >= transient:
-                    trajectory.extend((rounded(x, 6), rounded(y, 6)))
-            trajectories.append(trajectory)
-            initial_y_values.append(initial_y)
+    for iteration in range(PHASE_ITERATIONS):
+        force = k * np.sin(TWO_PI * theta) + epsilon * np.sin(5 * TWO_PI * theta)
+        theta = np.mod(theta + r + force, 1.0)
+        r += force
+        theta_history[iteration] = theta
+        r_history[iteration] = r
 
+    canvas = np.full((PHASE_PANEL_HEIGHT, PHASE_PANEL_WIDTH, 3), 255, dtype=np.uint8)
+    visible = (r_history >= PHASE_R_MIN) & (r_history <= PHASE_R_MAX)
+    theta_visible = theta_history[visible]
+    r_visible = r_history[visible]
+    colour_history = np.broadcast_to(
+        phase_palette(PHASE_TOTAL_CURVES), (PHASE_ITERATIONS, PHASE_TOTAL_CURVES, 3)
+    )[visible]
+
+    columns = np.floor(theta_visible * PHASE_PANEL_WIDTH).astype(np.int64) % PHASE_PANEL_WIDTH
+    rows = PHASE_PANEL_HEIGHT - 1 - np.floor(
+        (r_visible - PHASE_R_MIN) / (PHASE_R_MAX - PHASE_R_MIN) * PHASE_PANEL_HEIGHT
+    ).astype(np.int64)
+    rows = np.clip(rows, 0, PHASE_PANEL_HEIGHT - 1)
+
+    # A 3-by-3 subpixel stamp gives the same dense, point-based look as the
+    # former shader-style renderer without joining across the cylinder seam.
+    for dx in (-1, 0, 1):
+        stamped_columns = (columns + dx) % PHASE_PANEL_WIDTH
+        for dy in (-1, 0, 1):
+            stamped_rows = np.clip(rows + dy, 0, PHASE_PANEL_HEIGHT - 1)
+            for channel in range(3):
+                np.minimum.at(
+                    canvas[:, :, channel],
+                    (stamped_rows, stamped_columns),
+                    colour_history[:, channel],
+                )
+
+    return Image.fromarray(canvas, "RGB")
+
+
+def phase_sprite_filename(epsilon: float) -> str:
+    return f"phase-e-{epsilon:.4f}.png"
+
+
+def render_phase_sheet(epsilon: float) -> str:
+    """Render the nine K-panels for one epsilon into one horizontal image."""
+    sheet = Image.new("RGB", (PHASE_PANEL_WIDTH * len(K_VALUES), PHASE_PANEL_HEIGHT), "white")
+    for index, k in enumerate(K_VALUES):
+        sheet.paste(rasterize_phase_panel(k, epsilon), (index * PHASE_PANEL_WIDTH, 0))
+    filename = phase_sprite_filename(epsilon)
+    sheet.save(OUT_DIR / filename, optimize=True)
+    return filename
+
+
+def phase_metadata(sprite: str, index: int) -> dict[str, object]:
     return {
-        "trajectories": trajectories,
-        "initialY": initial_y_values,
-        "yWindow": y_window,
-        "transient": transient,
-        "displayedIterations": displayed_iterations,
-        "trajectoryCount": len(trajectories),
+        "sprite": sprite,
+        "spriteIndex": index,
+        "spritePanelWidth": PHASE_PANEL_WIDTH,
+        "spritePanelHeight": PHASE_PANEL_HEIGHT,
+        "yWindow": [PHASE_R_MIN, PHASE_R_MAX],
+        "iterations": PHASE_ITERATIONS,
+        "trajectoryCount": PHASE_TOTAL_CURVES,
     }
 
 
 for epsilon in EPSILON_VALUES:
-    for k in K_VALUES:
+    phase_sprite = render_phase_sheet(epsilon)
+    slices: list[dict[str, object]] = []
+    for k_index, k in enumerate(K_VALUES):
         result_by_abs_p = {abs(p): minimise_action(abs(p), k, epsilon) for p in P_VALUES}
         omega = [rounded(p / PERIOD, 8) for p in P_VALUES]
         raw_value = [rounded(result_by_abs_p[abs(p)][0], 9) for p in P_VALUES]
         value = [rounded(entry, 12) for entry in strictly_convex_projection(raw_value)]
         residual = [rounded(result_by_abs_p[abs(p)][1], 12) for p in P_VALUES]
-        data = {
-            "k": k,
-            "epsilon": epsilon,
-            "beta": {
-                "omega": omega,
-                "rawValue": raw_value,
-                "value": value,
-                "curvatureFloor": STRICT_CONVEX_CURVATURE,
-                "residual": residual,
-                "period": PERIOD,
-            },
-            "phase": phase_portrait(k, epsilon),
-        }
-        filename = OUT_DIR / f"k-{k:.4f}-e-{epsilon:.4f}.json"
-        filename.write_text(json.dumps(data, separators=(",", ":")))
-        print(f"wrote {filename.name}")
+        slices.append(
+            {
+                "k": k,
+                "beta": {
+                    "omega": omega,
+                    "rawValue": raw_value,
+                    "value": value,
+                    "curvatureFloor": STRICT_CONVEX_CURVATURE,
+                    "residual": residual,
+                    "period": PERIOD,
+                },
+                "phase": phase_metadata(phase_sprite, k_index),
+            }
+        )
+    data = {"epsilon": epsilon, "slices": slices}
+    filename = OUT_DIR / f"e-{epsilon:.4f}.json"
+    filename.write_text(json.dumps(data, separators=(",", ":")))
+    print(f"wrote {filename.name} and {phase_sprite}")
 
 manifest = {
-    "version": "0.7",
+    "version": "0.8",
     "formula": "y' = y + K sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
     "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(2π) cos(2πx) - epsilon/(10π) cos(10πx)",
     "kValues": K_VALUES,
@@ -363,7 +424,8 @@ manifest = {
         "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
     },
     "phase": {
-        "caveat": "Finite iterates of fixed seeds in a displayed y-window; visible curves are not proofs of KAM tori.",
+        "method": "64 uniformly spaced initial conditions on theta=1/2, each drawn for 6000 iterates.",
+        "caveat": "Finite iterates in a displayed y-window; visible curves are not proofs of KAM tori.",
     },
 }
 (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
