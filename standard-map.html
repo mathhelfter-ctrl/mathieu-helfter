@@ -30,8 +30,8 @@
       <label for="standard-map-k">Parameter K: <output id="standard-map-k-value">Loading…</output></label>
       <input id="standard-map-k" type="range" min="0" max="0" value="0" step="1" disabled>
       <label for="standard-map-epsilon">Fine-scale perturbation \(\varepsilon\): <output id="standard-map-epsilon-value">Loading…</output></label>
-      <select id="standard-map-epsilon" disabled aria-label="Fine-scale perturbation epsilon"></select>
-      <button id="standard-map-reset" class="text-button" type="button">Reset to \(K=\varepsilon=0\)</button>
+      <input id="standard-map-epsilon" type="range" min="0" max="0" value="0" step="1" disabled aria-label="Fine-scale perturbation epsilon">
+      <button id="standard-map-reset" class="text-button text-button--compact" type="button">Reset</button>
       <span id="standard-map-status" aria-live="polite">Loading precomputed data…</span>
     </section>
 
@@ -52,18 +52,32 @@
     <p class="numerical-caption">Precomputed numerical data only. The \(\beta\) values come from finite-period action minimisation, and the visible phase curves are not proofs of KAM tori.</p>
 
     <section>
-      <h2>Conventions</h2>
-      <p>The displayed two-parameter map is</p>
+      <h2>A short explanation</h2>
+      <p>Set</p>
       \[
-        y' = y + \frac{K}{2\pi}\sin(2\pi x) + \varepsilon\sin(10\pi x),
-        \qquad x' = x + y' \pmod 1,
+        V_{K,\varepsilon}(x)
+        = -\frac{K}{2\pi}\cos(2\pi x)
+          -\frac{\varepsilon}{10\pi}\cos(10\pi x),
+        \qquad
+        \partial_xV_{K,\varepsilon}(x)
+        = K\sin(2\pi x)+\varepsilon\sin(10\pi x).
       \]
-      <p>with generating function</p>
+      <p>The parameters \(K\) and \(\varepsilon\) vary the two Fourier modes of this potential. The standard map is</p>
       \[
-        S_{K,\varepsilon}(x,X) = \frac12(X-x)^2 - \frac{K}{4\pi^2}\cos(2\pi x)
-        - \frac{\varepsilon}{10\pi}\cos(10\pi x).
+        y' = y+\partial_xV_{K,\varepsilon}(x),
+        \qquad x'=x+y'\pmod 1.
       \]
-      <p>At \(K=\varepsilon=0\), the reference curve is \(\beta_0(\omega)=\tfrac12\omega^2\).</p>
+      <p>For a sampled rational rotation number \(\omega=p/q\), the plotted finite-period approximation is</p>
+      \[
+        \beta_{K,\varepsilon}^{[q]}\!\left(\frac pq\right)
+        =\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
+        \left[
+          \frac12(x_{n+1}-x_n)^2
+          -\frac{K}{2\pi}\cos(2\pi x_n)
+          -\frac{\varepsilon}{10\pi}\cos(10\pi x_n)
+        \right].
+      \]
+      <p>The dashed curve is the \(V=0\) case, namely \(K=\varepsilon=0\), for which \(\beta_0(\omega)=\tfrac12\omega^2\).</p>
       <a class="back-link" href="index.html#learn">← Back to learning</a>
     </section>
   </main>
