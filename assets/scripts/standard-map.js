@@ -286,6 +286,7 @@
       epsilonSlider.max = String(manifest.epsilonValues.length - 1);
       epsilonSlider.value = "0";
       slider.disabled = false;
+      epsilonSlider.disabled = false;
       await loadSlice(0);
     } catch (error) {
       status.textContent = "The module data could not be loaded.";
