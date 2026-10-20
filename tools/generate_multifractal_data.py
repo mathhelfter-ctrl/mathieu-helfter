@@ -3,7 +3,7 @@
 
 The model is K_gamma = {(n^-gamma epsilon_n): epsilon_n in {0,1}} in c_0,
 equipped with the product measure having Bernoulli parameter p. The website only
-displays the precomputed tables written by this script.
+displays the data tables written by this script.
 """
 
 from __future__ import annotations
@@ -12,7 +12,6 @@ import json
 import math
 import random
 from pathlib import Path
-{
 
 OUT_FILE = Path(__file__).resolve().parents[1] / "assets" / "data" / "infinite-fractals" / "data.json"
 OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
