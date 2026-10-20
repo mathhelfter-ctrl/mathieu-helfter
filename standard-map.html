@@ -23,61 +23,51 @@
     <header class="page-heading">
       <p class="eyebrow">Interactive module</p>
       <h1>The standard map: KAM curves and Mather's \(\beta\)-function</h1>
-      <p>Move through discrete, precomputed values of \(K\) and \(\varepsilon\), and compare a phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
+      <p>Move through discrete values of \(K\) and \(\varepsilon\), and compare a phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
     </header>
 
     <section class="module-controls" aria-label="Standard-map controls">
-      <label for="standard-map-k">Parameter K: <output id="standard-map-k-value">Loading…</output></label>
-      <input id="standard-map-k" type="range" min="0" max="0" value="0" step="1" disabled>
-      <label for="standard-map-epsilon">Fine-scale perturbation \(\varepsilon\): <output id="standard-map-epsilon-value">Loading…</output></label>
-      <input id="standard-map-epsilon" type="range" min="0" max="0" value="0" step="1" disabled aria-label="Fine-scale perturbation epsilon">
-      <button id="standard-map-reset" class="text-button text-button--compact" type="button">Reset</button>
-      <span id="standard-map-status" aria-live="polite">Loading precomputed data…</span>
+      <div class="parameter-control">
+        <label for="standard-map-k">Parameter K = <output id="standard-map-k-value">Loading…</output></label>
+        <input id="standard-map-k" type="range" min="0" max="0" value="0" step="1" disabled>
+      </div>
+      <div class="parameter-control">
+        <label for="standard-map-epsilon">Parameter ε = <output id="standard-map-epsilon-value">Loading…</output></label>
+        <input id="standard-map-epsilon" type="range" min="0" max="0" value="0" step="1" disabled aria-label="Fine-scale perturbation epsilon">
+      </div>
+      <div class="module-actions">
+        <button id="standard-map-reset" class="text-button text-button--compact" type="button">Reset</button>
+        <span id="standard-map-status" aria-live="polite">Loading data…</span>
+      </div>
     </section>
 
     <section class="module-panels" aria-label="Standard-map displays">
       <article class="module-panel">
         <h2>Phase portrait</h2>
         <canvas id="phase-canvas" role="img" aria-label="Phase portrait for the selected standard-map parameter"></canvas>
-        <p class="plot-readout">Finite iterates of fixed initial conditions on the cylinder x mod 1, y ∈ [-1.25, 1.25].</p>
+        <p class="plot-readout">Finite iterates on the cylinder x mod 1, y ∈ [-1.25, 1.25]. Colour follows the initial y: red, through plum, to deep blue.</p>
       </article>
 
       <article class="module-panel">
       <h2>Numerical \(\beta\)-function</h2>
         <canvas id="beta-canvas" role="img" aria-label="Numerical beta-function plot for the selected standard-map parameter"></canvas>
-        <p id="beta-readout" class="plot-readout">Move over the plot to inspect a sampled rotation number.</p>
+        <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5.</p>
       </article>
     </section>
 
-    <p class="numerical-caption">Precomputed numerical data only. The \(\beta\) values come from finite-period action minimisation, and the visible phase curves are not proofs of KAM tori.</p>
-
     <section>
       <h2>A short explanation</h2>
-      <p>Set</p>
+      <p>The sliders choose the two-frequency potential \(V_{K,\varepsilon}\). Its derivative is the kick received by the momentum:</p>
       \[
-        V_{K,\varepsilon}(x)
-        = -\frac{K}{2\pi}\cos(2\pi x)
-          -\frac{\varepsilon}{10\pi}\cos(10\pi x),
-        \qquad
-        \partial_xV_{K,\varepsilon}(x)
-        = K\sin(2\pi x)+\varepsilon\sin(10\pi x).
+        V_{K,\varepsilon}(x)=-\frac{K}{2\pi}\cos(2\pi x)-\frac{\varepsilon}{10\pi}\cos(10\pi x),
+        \qquad y'=y+V'_{K,\varepsilon}(x),\quad x'=x+y'\pmod1.
       \]
-      <p>The parameters \(K\) and \(\varepsilon\) vary the two Fourier modes of this potential. The standard map is</p>
+      <p>For a general potential \(V\), \(\frac12(x_{n+1}-x_n)^2+V(x_n)\) is the one-step action. The function \(\beta_V(\omega)\) records the smallest average action among orbits with average turn number \(\omega\):</p>
       \[
-        y' = y+\partial_xV_{K,\varepsilon}(x),
-        \qquad x'=x+y'\pmod 1.
+        \beta_V\!\left(\frac pq\right)=\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
+        \left[\frac12(x_{n+1}-x_n)^2+V(x_n)\right].
       \]
-      <p>For a sampled rational rotation number \(\omega=p/q\), the plotted finite-period approximation is</p>
-      \[
-        \beta_{K,\varepsilon}^{[q]}\!\left(\frac pq\right)
-        =\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
-        \left[
-          \frac12(x_{n+1}-x_n)^2
-          -\frac{K}{2\pi}\cos(2\pi x_n)
-          -\frac{\varepsilon}{10\pi}\cos(10\pi x_n)
-        \right].
-      \]
-      <p>The dashed curve is the \(V=0\) case, namely \(K=\varepsilon=0\), for which \(\beta_0(\omega)=\tfrac12\omega^2\).</p>
+      <p>The solid curve is the least-squares strictly convex fit to these finite-period samples; the dashed curve is the unforced case \(V=0\). Retrieving \(V\) from \(\beta_V\) is explored in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
       <a class="back-link" href="index.html#learn">← Back to learning</a>
     </section>
   </main>
