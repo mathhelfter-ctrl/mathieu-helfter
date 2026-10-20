@@ -21,7 +21,7 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--ink);
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: "Figtree", Montserrat, sans-serif;
   font-size: 17px;
   line-height: 1.65;
 }
