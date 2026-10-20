@@ -174,21 +174,11 @@
     context.stroke();
   }
 
-  function extent(values) {
-    let minimum = Infinity;
-    let maximum = -Infinity;
-    values.forEach((value) => {
-      minimum = Math.min(minimum, value);
-      maximum = Math.max(maximum, value);
-    });
-    return [minimum, maximum];
-  }
-
-  function traceStrictlyConvexCurve(context, omega, value, xToPixel, yToPixel) {
+  function traceBetaDifferenceCurve(context, omega, value, xToPixel, yToPixel) {
     const slopes = value.slice(1).map((entry, index) => (entry - value[index]) / (omega[index + 1] - omega[index]));
     const bendFraction = 0.45;
     context.beginPath();
-    context.moveTo(xToPixel(omega[0]), yToPixel(value[0]));
+    context.moveTo(xToPixel(omega[0]), yToPixel(value[0] - 0.5 * omega[0] * omega[0]));
 
     for (let index = 0; index < slopes.length; index += 1) {
       const leftGap = index > 0 ? slopes[index] - slopes[index - 1] : Infinity;
@@ -200,7 +190,7 @@
         const t = step / 12;
         const rotation = omega[index] + t * interval;
         const beta = (1 - t) * value[index] + t * value[index + 1] - bend * t * (1 - t);
-        context.lineTo(xToPixel(rotation), yToPixel(beta));
+        context.lineTo(xToPixel(rotation), yToPixel(beta - 0.5 * rotation * rotation));
       }
     }
   }
@@ -209,12 +199,8 @@
     const { context, width, height } = setCanvasSize(betaCanvas);
     if (!currentData) return;
     const { omega, value } = currentData.beta;
-    const reference = omega.map((rotation) => 0.5 * rotation * rotation);
-    const [minimum, maximum] = extent(value.concat(reference));
-    const padding = Math.max(0.005, 0.12 * (maximum - minimum));
-    const yMin = minimum - padding;
-    const yMax = maximum + padding;
-    const plot = drawFrame(context, width, height, { left: 57, right: 15, top: 15, bottom: 38 }, "rotation number ω", "β(ω)");
+    const [yMin, yMax] = manifest.beta.displayRange || [-0.06, 0.005];
+    const plot = drawFrame(context, width, height, { left: 64, right: 15, top: 15, bottom: 38 }, "rotation number ω", "βV(ω) − β0(ω)");
     const xToPixel = (x) => plot.left + ((x + 0.5) / 1) * (plot.right - plot.left);
     const yToPixel = (y) => plot.bottom - ((y - yMin) / (yMax - yMin)) * (plot.bottom - plot.top);
 
@@ -223,18 +209,15 @@
     context.textAlign = "center";
     [-0.5, 0, 0.5].forEach((x) => context.fillText(x.toFixed(1), xToPixel(x), plot.bottom + 16));
     context.textAlign = "right";
-    [yMin, (yMin + yMax) / 2, yMax].forEach((y) => context.fillText(y.toFixed(3), plot.left - 6, yToPixel(y) + 4));
+    [yMin, (yMin + yMax) / 2, 0, yMax].forEach((y) => context.fillText(y.toFixed(3), plot.left - 6, yToPixel(y) + 4));
 
     context.save();
     context.setLineDash([5, 4]);
     context.strokeStyle = "#8a819d";
     context.lineWidth = 1.5;
     context.beginPath();
-    for (let index = 0; index <= 180; index += 1) {
-      const rotation = -0.5 + index / 180;
-      const command = index === 0 ? "moveTo" : "lineTo";
-      context[command](xToPixel(rotation), yToPixel(0.5 * rotation * rotation));
-    }
+    context.moveTo(xToPixel(-0.5), yToPixel(0));
+    context.lineTo(xToPixel(0.5), yToPixel(0));
     context.stroke();
     context.restore();
 
@@ -244,7 +227,7 @@
     betaGradient.addColorStop(1, paletteColor(1));
     context.strokeStyle = betaGradient;
     context.lineWidth = 2;
-    traceStrictlyConvexCurve(context, omega, value, xToPixel, yToPixel);
+    traceBetaDifferenceCurve(context, omega, value, xToPixel, yToPixel);
     context.stroke();
     betaCanvas.dataset.plot = JSON.stringify({ left: plot.left, right: plot.right, top: plot.top, bottom: plot.bottom, yMin, yMax });
   }
@@ -262,7 +245,9 @@
     const omega = currentData.beta.omega;
     const proportion = Math.max(0, Math.min(1, (localX - plot.left) / (plot.right - plot.left)));
     const index = Math.round(proportion * (omega.length - 1));
-    betaReadout.textContent = `ω = ${omega[index].toFixed(4)}, β = ${currentData.beta.value[index].toFixed(6)} (strictly convex fit; period ${currentData.beta.period})`;
+    const beta = currentData.beta.value[index];
+    const difference = beta - 0.5 * omega[index] * omega[index];
+    betaReadout.textContent = `ω = ${omega[index].toFixed(4)}, βV − β0 = ${difference.toFixed(6)} (period ${currentData.beta.period})`;
   });
 
   betaCanvas.addEventListener("mouseleave", () => {
