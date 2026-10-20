@@ -186,10 +186,11 @@ h1 {
   letter-spacing: -0.035em;
 }
 
-.hero p:last-child {
+.hero p:not(.eyebrow) {
   max-width: 55ch;
-  margin-bottom: 0;
 }
+
+.hero p:last-child { margin-bottom: 0; }
 
 .page-content { padding: 6.3rem 0 4rem; }
 .hero + .page-content { padding-top: 2.5rem; }
