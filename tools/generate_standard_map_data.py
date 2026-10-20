@@ -21,6 +21,7 @@ EPSILON_VALUES = [0, 0.025, 0.05, 0.075, 0.1]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
+SOLVER_TOLERANCE = 1e-7
 
 
 def rounded(value: float, digits: int = 7) -> float:
@@ -123,6 +124,39 @@ def newton_refine(x: list[float], p: int, k: float, epsilon: float) -> tuple[lis
     return x, action, gradient, residual
 
 
+def continue_descent(
+    x: list[float],
+    action: float,
+    gradient: list[float],
+    residual: float,
+    p: int,
+    k: float,
+    epsilon: float,
+) -> tuple[list[float], float, list[float], float]:
+    """Resolve an exceptional near-flat direction before exporting a value."""
+    step = 0.2
+    for _ in range(100_000):
+        if residual < SOLVER_TOLERANCE:
+            break
+        accepted = False
+        local_step = step
+        for _ in range(30):
+            candidate = [value - local_step * derivative for value, derivative in zip(x, gradient)]
+            candidate_action, candidate_gradient, candidate_residual = action_and_gradient(candidate, p, k, epsilon)
+            if candidate_action < action:
+                x = candidate
+                action = candidate_action
+                gradient = candidate_gradient
+                residual = candidate_residual
+                step = min(local_step * 1.1, 0.2)
+                accepted = True
+                break
+            local_step *= 0.5
+        if not accepted:
+            break
+    return x, action, gradient, residual
+
+
 def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
     """Multi-start gradient descent for the finite-period discrete action."""
     if k == 0 and epsilon == 0:
@@ -166,10 +200,18 @@ def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
                 break
 
         x, action, gradient, residual = newton_refine(x, p, k, epsilon)
-        if action < best_action:
+        if residual > SOLVER_TOLERANCE:
+            x, action, gradient, residual = continue_descent(x, action, gradient, residual, p, k, epsilon)
+            x, action, gradient, residual = newton_refine(x, p, k, epsilon)
+        if residual <= SOLVER_TOLERANCE and action < best_action:
             best_action = action
             best_residual = residual
 
+    if not math.isfinite(best_action):
+        raise RuntimeError(
+            f"No residual-qualified minimiser for p={p}, K={k}, epsilon={epsilon}; "
+            f"best residual was {best_residual:.3e}."
+        )
     return best_action / PERIOD, best_residual
 
 
@@ -218,13 +260,14 @@ for epsilon in EPSILON_VALUES:
         print(f"wrote {filename.name}")
 
 manifest = {
-    "version": "0.1",
-  "formula": "y' = y + K/(2π) sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
-  "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(4π²) cos(2πx) - epsilon/(10π) cos(10πx)",
-  "kValues": K_VALUES,
-  "epsilonValues": EPSILON_VALUES,
+    "version": "0.2",
+    "formula": "y' = y + K/(2π) sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
+    "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(4π²) cos(2πx) - epsilon/(10π) cos(10πx)",
+    "kValues": K_VALUES,
+    "epsilonValues": EPSILON_VALUES,
     "beta": {
         "period": PERIOD,
+        "solverTolerance": SOLVER_TOLERANCE,
         "method": "Multi-start gradient descent for the finite-period action; smallest action retained.",
         "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
     },
