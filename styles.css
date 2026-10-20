@@ -22,7 +22,7 @@ html { scroll-behavior: smooth; }
 
 body {
   display: grid;
-  grid-template-columns: clamp(15rem, 21vw, 19.5rem) minmax(0, 1fr);
+  grid-template-columns: clamp(12.5rem, 17vw, 15.5rem) minmax(0, 1fr);
   grid-template-rows: minmax(1fr, auto) auto;
   min-height: 100vh;
   margin: 0;
@@ -52,7 +52,7 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 3rem clamp(1.5rem, 3vw, 2.6rem) 2.2rem;
+  padding: 2.6rem clamp(1.2rem, 2.2vw, 1.85rem) 2rem;
   background: var(--sidebar);
   color: #f8f2ee;
 }
