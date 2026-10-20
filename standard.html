@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive introduction to a two-parameter standard map, KAM curves, and Mather's beta-function.">
+  <title>The standard map | Mathieu Helfter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="assets/scripts/mathjax-config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <details class="site-menu">
+    <summary aria-label="Main navigation"><span class="menu-icon" aria-hidden="true"></span>Menu</summary>
+    <nav aria-label="Main navigation">
+      <a href="index.html">Welcome</a>
+      <a href="research.html">Research</a>
+      <a href="contact.html">Contact &amp; links</a>
+    </nav>
+  </details>
+
+  <main class="page-content module-page">
+    <header class="page-heading">
+      <p class="eyebrow">Interactive module</p>
+      <h1>The standard map: KAM curves and Mather's \(\beta\)-function</h1>
+      <p>Move through discrete values of \(K\) and \(\varepsilon\), and compare a phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
+    </header>
+
+    <section class="module-controls" aria-label="Standard-map controls">
+      <div class="parameter-control">
+        <label for="standard-map-k">Parameter K = <output id="standard-map-k-value">Loading…</output></label>
+        <input id="standard-map-k" type="range" min="0" max="0" value="0" step="1" disabled>
+      </div>
+      <div class="parameter-control">
+        <label for="standard-map-epsilon">Parameter ε = <output id="standard-map-epsilon-value">Loading…</output></label>
+        <input id="standard-map-epsilon" type="range" min="0" max="0" value="0" step="1" disabled aria-label="Fine-scale perturbation epsilon">
+      </div>
+      <div class="module-actions">
+        <button id="standard-map-reset" class="text-button text-button--compact" type="button">Reset</button>
+        <span id="standard-map-status" aria-live="polite">Loading data…</span>
+      </div>
+    </section>
+
+    <section class="module-panels" aria-label="Standard-map displays">
+      <article class="module-panel">
+        <h2>Phase portrait</h2>
+        <canvas id="phase-canvas" role="img" aria-label="Phase portrait for the selected standard-map parameter"></canvas>
+        <p class="plot-readout">64 uniform initial conditions on x = 0.5, each followed for 6,000 iterates; y ∈ [-0.30, 0.30]. Colour follows the initial y: red, through plum, to deep blue.</p>
+      </article>
+
+      <article class="module-panel">
+      <h2>Numerical \(\beta_V-\beta_0\)</h2>
+        <canvas id="beta-canvas" role="img" aria-label="Numerical beta difference plot for the selected standard-map parameter"></canvas>
+        <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5.</p>
+      </article>
+    </section>
+
+     <section>
+      <h2>A short explanation</h2>
+      <p>  We consider a potential V of the form:</p>
+      \[
+        V (x)=-\frac{K}{2\pi}\cos(2\pi x)-\frac{\varepsilon}{10\pi}\cos(10\pi x). 
+      \]
+      <p> Move the sliders to move parameters \(K\) and \(\varepsilon\) </p>
+      <p> The corresponding dynamics are given by the 2D map </p>
+      \[  y'=y+V'(x),\quad x'=x+y'\pmod1. 
+      \]
+      <p>For a general potential \(V\), the function \(\beta_V(\omega)\) records the smallest average action among orbits with average turn number \(\omega\):</p>
+      \[
+        \beta_V\!\left(\frac pq\right)=\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
+        \left[\frac12(x_{n+1}-x_n)^2+V(x_n)\right].
+      \]
+      <p>The dashed curve corresponds to the case \(V=0\). Retrieving \(V\) from \(\beta_V\) is explored in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
+      <a class="back-link" href="index.html#learn">← Back to learning</a>
+    </section>
+  </main>
+
+  <footer>Mathieu Helfter · Institute of Science and Technology Austria</footer>
+  <script src="assets/scripts/standard-map.js"></script>
+</body>
+</html>

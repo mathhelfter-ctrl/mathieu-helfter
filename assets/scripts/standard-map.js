@@ -14,6 +14,7 @@
   let manifest;
   let currentData;
   let requestId = 0;
+  let pendingLoad;
 
   function epsilonFilename(epsilon) {
     return `e-${Number(epsilon).toFixed(4)}.json`;
@@ -55,9 +56,7 @@
     const thisRequest = ++requestId;
     valueOutput.textContent = formatK(k);
     epsilonOutput.textContent = formatEpsilon(epsilon);
-    status.textContent = "Loading data…";
-    slider.disabled = true;
-    epsilonSlider.disabled = true;
+    status.textContent = cache.has(cacheKey) ? "" : "Loading data…";
     try {
       let epsilonData = cache.get(cacheKey);
       if (!epsilonData) {
@@ -79,12 +78,19 @@
     } catch (error) {
       status.textContent = "The data could not be loaded.";
       console.error(error);
-    } finally {
-      if (thisRequest === requestId) {
-        slider.disabled = false;
-        epsilonSlider.disabled = false;
-      }
     }
+  }
+
+  function updateParameterLabels() {
+    if (!manifest) return;
+    valueOutput.textContent = formatK(manifest.kValues[Number(slider.value)]);
+    epsilonOutput.textContent = formatEpsilon(manifest.epsilonValues[Number(epsilonSlider.value)]);
+  }
+
+  function scheduleLoad(index) {
+    updateParameterLabels();
+    window.clearTimeout(pendingLoad);
+    pendingLoad = window.setTimeout(() => loadSlice(index), 90);
   }
 
   function setCanvasSize(canvas) {
@@ -202,7 +208,7 @@
     const { context, width, height } = setCanvasSize(betaCanvas);
     if (!currentData) return;
     const { omega, value } = currentData.beta;
-    const [yMin, yMax] = manifest.beta.displayRange || [-0.06, 0.005];
+    const [yMin, yMax] = manifest.beta.displayRange || [-0.011, 0.001];
     const plot = drawFrame(context, width, height, { left: 64, right: 15, top: 15, bottom: 38 }, "rotation number ω", "βV(ω) − β0(ω)");
     const xToPixel = (x) => plot.left + ((x + 0.5) / 1) * (plot.right - plot.left);
     const yToPixel = (y) => plot.bottom - ((y - yMin) / (yMax - yMin)) * (plot.bottom - plot.top);
@@ -257,11 +263,12 @@
     betaReadout.textContent = "Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5.";
   });
 
-  slider.addEventListener("input", () => loadSlice(Number(slider.value)));
-  epsilonSlider.addEventListener("input", () => loadSlice(Number(slider.value)));
+  slider.addEventListener("input", () => scheduleLoad(Number(slider.value)));
+  epsilonSlider.addEventListener("input", () => scheduleLoad(Number(slider.value)));
   resetButton.addEventListener("click", () => {
     slider.value = "0";
     epsilonSlider.value = "0";
+    window.clearTimeout(pendingLoad);
     loadSlice(0);
   });
   window.addEventListener("resize", () => {

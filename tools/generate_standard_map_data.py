@@ -27,8 +27,8 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 # A 49 by 49 grid fits into 99 assets: one data file and one portrait sheet
 # for each epsilon value, plus the manifest.
 GRID_SIZE = 49
-K_VALUES = [round(index * 0.32 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
-EPSILON_VALUES = [round(index * 0.024 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
+K_VALUES = [round(index * 0.05 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
+EPSILON_VALUES = [round(index * 0.05 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
@@ -551,7 +551,7 @@ def write_manifest() -> None:
             "solverTolerance": SOLVER_TOLERANCE,
             "method": "Multi-start gradient descent for the finite-period action; smallest action retained.",
             "displayCurve": "Least-squares projection of the sampled values onto a strictly convex discrete curve.",
-            "displayRange": [-0.06, 0.005],
+            "displayRange": [-0.011, 0.001],
             "curvatureFloor": STRICT_CONVEX_CURVATURE,
             "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
         },
