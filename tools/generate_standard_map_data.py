@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import argparse
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -21,8 +24,11 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # These ranges show the passage from visible KAM curves through resonant
 # layers to clear breakup, without spending most of the slider in broad chaos.
-K_VALUES = [round(index * 0.04, 2) for index in range(9)]
-EPSILON_VALUES = [round(index * 0.001, 3) for index in range(9)]
+# A 49 by 49 grid fits into 99 assets: one data file and one portrait sheet
+# for each epsilon value, plus the manifest.
+GRID_SIZE = 49
+K_VALUES = [round(index * 0.32 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
+EPSILON_VALUES = [round(index * 0.024 / (GRID_SIZE - 1), 7) for index in range(GRID_SIZE)]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
@@ -41,6 +47,7 @@ PHASE_R_MIN = -0.30
 PHASE_R_MAX = 0.30
 PHASE_PANEL_WIDTH = 512
 PHASE_PANEL_HEIGHT = 512
+PHASE_SPRITE_COLUMNS = 7
 PHASE_COLOURS = np.array(
     (
         (196, 39, 69),
@@ -244,8 +251,8 @@ def continue_descent(
     return x, action, gradient, residual
 
 
-def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
-    """Multi-start gradient descent for the finite-period discrete action."""
+def minimise_action_reference(p: int, k: float, epsilon: float) -> tuple[float, float]:
+    """Reference implementation of the finite-period minimisation."""
     if k == 0 and epsilon == 0:
         omega = p / PERIOD
         return 0.5 * omega * omega, 0.0
@@ -299,6 +306,113 @@ def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
             f"No residual-qualified minimiser for p={p}, K={k}, epsilon={epsilon}; "
             f"best residual was {best_residual:.3e}."
         )
+    return best_action / PERIOD, best_residual
+
+
+def array_action_and_gradient(
+    x: np.ndarray,
+    p: int,
+    k: float,
+    epsilon: float,
+) -> tuple[float, np.ndarray, float]:
+    """Vectorised action and gradient for the same finite-period problem."""
+    following = np.roll(x, -1)
+    following[-1] += p
+    previous = np.roll(x, 1)
+    previous[0] -= p
+    difference = following - x
+    angle = TWO_PI * x
+    action = float(
+        np.sum(
+            0.5 * difference * difference
+            - potential_scale(k) * np.cos(angle)
+            - high_frequency_potential_scale(epsilon) * np.cos(5 * angle)
+        )
+    )
+    gradient = (
+        x - previous - difference
+        + k * np.sin(angle)
+        + epsilon * np.sin(5 * angle)
+    )
+    return action, gradient, float(np.max(np.abs(gradient)))
+
+
+def vectorised_newton_minimum(
+    initial: np.ndarray,
+    p: int,
+    k: float,
+    epsilon: float,
+) -> tuple[np.ndarray, float, float]:
+    """Damped Newton descent using the exact cyclic Hessian."""
+    x = initial.copy()
+    action, gradient, residual = array_action_and_gradient(x, p, k, epsilon)
+    q = len(x)
+    for _ in range(80):
+        if residual <= SOLVER_TOLERANCE:
+            break
+        angle = TWO_PI * x
+        hessian = np.zeros((q, q), dtype=np.float64)
+        hessian[np.arange(q), np.arange(q)] = (
+            2
+            + TWO_PI * k * np.cos(angle)
+            + 5 * TWO_PI * epsilon * np.cos(5 * angle)
+        )
+        hessian[np.arange(q), np.roll(np.arange(q), 1)] = -1
+        hessian[np.arange(q), np.roll(np.arange(q), -1)] = -1
+        try:
+            direction = np.linalg.solve(hessian, -gradient)
+        except np.linalg.LinAlgError:
+            direction = -gradient
+        if float(np.dot(gradient, direction)) >= -1e-14:
+            direction = -gradient
+
+        accepted = False
+        damping = 1.0
+        for _ in range(24):
+            candidate = x + damping * direction
+            candidate_action, candidate_gradient, candidate_residual = array_action_and_gradient(
+                candidate,
+                p,
+                k,
+                epsilon,
+            )
+            if candidate_action < action:
+                x, action, gradient, residual = candidate, candidate_action, candidate_gradient, candidate_residual
+                accepted = True
+                break
+            damping *= 0.5
+        if not accepted:
+            break
+    return x, action, residual
+
+
+def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
+    """Multi-start, vectorised minimisation of the finite-period action."""
+    if k == 0 and epsilon == 0:
+        omega = p / PERIOD
+        return 0.5 * omega * omega, 0.0
+    if p == 0:
+        return -potential_scale(k) - high_frequency_potential_scale(epsilon), 0.0
+
+    starts = 10
+    indices = np.arange(PERIOD, dtype=np.float64)
+    best_action = float("inf")
+    best_residual = float("inf")
+    for seed in range(starts):
+        x = (
+            indices * p / PERIOD
+            + seed / starts
+            + 0.04 * np.sin(TWO_PI * (indices / PERIOD + seed / (starts * 3)))
+        )
+        _, action, residual = vectorised_newton_minimum(x, p, k, epsilon)
+        if residual <= SOLVER_TOLERANCE and action < best_action:
+            best_action = action
+            best_residual = residual
+
+    if not math.isfinite(best_action):
+        # Preserve the reference implementation as a conservative fallback for
+        # an exceptional parameter value where Newton did not settle.
+        return minimise_action_reference(p, k, epsilon)
     return best_action / PERIOD, best_residual
 
 
@@ -360,12 +474,27 @@ def phase_sprite_filename(epsilon: float) -> str:
 
 
 def render_phase_sheet(epsilon: float) -> str:
-    """Render the nine K-panels for one epsilon into one horizontal image."""
-    sheet = Image.new("RGB", (PHASE_PANEL_WIDTH * len(K_VALUES), PHASE_PANEL_HEIGHT), "white")
+    """Render all K-panels for one epsilon into one square sprite sheet."""
+    rows = math.ceil(len(K_VALUES) / PHASE_SPRITE_COLUMNS)
+    sheet = Image.new(
+        "RGB",
+        (PHASE_PANEL_WIDTH * PHASE_SPRITE_COLUMNS, PHASE_PANEL_HEIGHT * rows),
+        "white",
+    )
     for index, k in enumerate(K_VALUES):
-        sheet.paste(rasterize_phase_panel(k, epsilon), (index * PHASE_PANEL_WIDTH, 0))
+        column = index % PHASE_SPRITE_COLUMNS
+        row = index // PHASE_SPRITE_COLUMNS
+        sheet.paste(
+            rasterize_phase_panel(k, epsilon),
+            (column * PHASE_PANEL_WIDTH, row * PHASE_PANEL_HEIGHT),
+        )
     filename = phase_sprite_filename(epsilon)
-    sheet.save(OUT_DIR / filename, optimize=True)
+    # The drawings contain a fixed, small palette.  Palette PNG preserves the
+    # appearance while keeping the 49-sheet collection practical to publish.
+    sheet.quantize(colors=128, method=Image.Quantize.MEDIANCUT).save(
+        OUT_DIR / filename,
+        optimize=True,
+    )
     return filename
 
 
@@ -373,6 +502,7 @@ def phase_metadata(sprite: str, index: int) -> dict[str, object]:
     return {
         "sprite": sprite,
         "spriteIndex": index,
+        "spriteColumns": PHASE_SPRITE_COLUMNS,
         "spritePanelWidth": PHASE_PANEL_WIDTH,
         "spritePanelHeight": PHASE_PANEL_HEIGHT,
         "yWindow": [PHASE_R_MIN, PHASE_R_MAX],
@@ -381,7 +511,7 @@ def phase_metadata(sprite: str, index: int) -> dict[str, object]:
     }
 
 
-for epsilon in EPSILON_VALUES:
+def generate_epsilon_slice(epsilon: float) -> str:
     phase_sprite = render_phase_sheet(epsilon)
     slices: list[dict[str, object]] = []
     for k_index, k in enumerate(K_VALUES):
@@ -407,25 +537,59 @@ for epsilon in EPSILON_VALUES:
     data = {"epsilon": epsilon, "slices": slices}
     filename = OUT_DIR / f"e-{epsilon:.4f}.json"
     filename.write_text(json.dumps(data, separators=(",", ":")))
-    print(f"wrote {filename.name} and {phase_sprite}")
+    return f"wrote {filename.name} and {phase_sprite}"
 
-manifest = {
-    "version": "0.8",
-    "formula": "y' = y + K sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
-    "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(2π) cos(2πx) - epsilon/(10π) cos(10πx)",
-    "kValues": K_VALUES,
-    "epsilonValues": EPSILON_VALUES,
-    "beta": {
-        "period": PERIOD,
-        "solverTolerance": SOLVER_TOLERANCE,
-        "method": "Multi-start gradient descent for the finite-period action; smallest action retained.",
-        "displayCurve": "Least-squares projection of the sampled values onto a strictly convex discrete curve.",
-        "curvatureFloor": STRICT_CONVEX_CURVATURE,
-        "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
-    },
-    "phase": {
-        "method": "64 uniformly spaced initial conditions on theta=1/2, each drawn for 6000 iterates.",
-        "caveat": "Finite iterates in a displayed y-window; visible curves are not proofs of KAM tori.",
-    },
-}
-(OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+def write_manifest() -> None:
+    manifest = {
+        "version": "0.9",
+        "formula": "y' = y + K sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
+        "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(2π) cos(2πx) - epsilon/(10π) cos(10πx)",
+        "kValues": K_VALUES,
+        "epsilonValues": EPSILON_VALUES,
+        "beta": {
+            "period": PERIOD,
+            "solverTolerance": SOLVER_TOLERANCE,
+            "method": "Multi-start gradient descent for the finite-period action; smallest action retained.",
+            "displayCurve": "Least-squares projection of the sampled values onto a strictly convex discrete curve.",
+            "displayRange": [-0.06, 0.005],
+            "curvatureFloor": STRICT_CONVEX_CURVATURE,
+            "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
+        },
+        "phase": {
+            "method": "64 uniformly spaced initial conditions on theta=1/2, each drawn for 6000 iterates.",
+            "caveat": "Finite iterates in a displayed y-window; visible curves are not proofs of KAM tori.",
+        },
+    }
+    (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate standard-map data and portraits.")
+    parser.add_argument(
+        "--epsilon",
+        action="append",
+        type=float,
+        help="Generate only this epsilon row; may be supplied several times.",
+    )
+    parser.add_argument("--serial", action="store_true", help="Disable parallel row generation.")
+    arguments = parser.parse_args()
+    epsilon_values = arguments.epsilon or EPSILON_VALUES
+
+    if arguments.epsilon or arguments.serial:
+        for epsilon in epsilon_values:
+            print(generate_epsilon_slice(epsilon))
+    else:
+        workers = min(8, os.cpu_count() or 1, len(epsilon_values))
+        try:
+            with ProcessPoolExecutor(max_workers=workers) as executor:
+                for message in executor.map(generate_epsilon_slice, epsilon_values):
+                    print(message)
+        except PermissionError:
+            print("Parallel workers unavailable; falling back to serial generation.")
+            for epsilon in epsilon_values:
+                print(generate_epsilon_slice(epsilon))
+    write_manifest()
+
+
+if __name__ == "__main__":
+    main()
