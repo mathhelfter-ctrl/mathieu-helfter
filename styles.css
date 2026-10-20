@@ -120,15 +120,28 @@ body.has-hero .page-content { grid-row: 2; }
 body.has-hero footer { grid-row: 3; }
 
 .hero {
+  position: relative;
+  overflow: hidden;
   min-height: 22rem;
   padding: 5.8rem 2rem 3.4rem;
   border-bottom: 1px solid #d5bdcf;
-  background-color: var(--lavender);
-  background-image:
-    linear-gradient(rgba(245, 242, 237, 0.54), rgba(245, 242, 237, 0.54)),
-    url("assets/images/kam-phase-portrait.png");
+  background-color: var(--page);
+}
+
+.hero::before {
+  position: absolute;
+  inset: 0;
+  background-image: url("assets/images/fractal-fern.png");
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
+  content: "";
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-inner,
