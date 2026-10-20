@@ -16,8 +16,8 @@ from pathlib import Path
 OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "data" / "standard-map"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-K_VALUES = [0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.97, 0.9716, 0.98, 1, 1.1, 1.25, 1.5, 2]
-EPSILON_VALUES = [0, 0.025, 0.05, 0.075, 0.1]
+K_VALUES = [round(index * 0.05, 2) for index in range(21)]
+EPSILON_VALUES = [round(index * 0.05, 2) for index in range(21)]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
@@ -29,7 +29,7 @@ def rounded(value: float, digits: int = 7) -> float:
 
 
 def potential_scale(k: float) -> float:
-    return k / (4 * math.pi * math.pi)
+    return k / TWO_PI
 
 
 def high_frequency_potential_scale(epsilon: float) -> float:
@@ -41,7 +41,7 @@ def action_and_gradient(x: list[float], p: int, k: float, epsilon: float) -> tup
     gradient = [0.0] * q
     action = 0.0
     max_gradient = 0.0
-    force_scale = k / TWO_PI
+    force_scale = k
     potential = potential_scale(k)
     high_frequency_potential = high_frequency_potential_scale(epsilon)
 
@@ -100,7 +100,7 @@ def newton_refine(x: list[float], p: int, k: float, epsilon: float) -> tuple[lis
             break
         hessian = [[0.0] * q for _ in range(q)]
         for i in range(q):
-            hessian[i][i] = 2 + k * math.cos(TWO_PI * x[i]) + 5 * TWO_PI * epsilon * math.cos(5 * TWO_PI * x[i])
+            hessian[i][i] = 2 + TWO_PI * k * math.cos(TWO_PI * x[i]) + 5 * TWO_PI * epsilon * math.cos(5 * TWO_PI * x[i])
             hessian[i][(i - 1) % q] = -1
             hessian[i][(i + 1) % q] = -1
         direction = solve_linear_system(hessian, [-value for value in gradient])
@@ -228,7 +228,7 @@ def phase_portrait(k: float, epsilon: float) -> dict[str, object]:
             x = (x_index + 0.5) / x_seeds
             y = initial_y
             for n in range(transient + displayed_iterations):
-                y += (k / TWO_PI) * math.sin(TWO_PI * x) + epsilon * math.sin(5 * TWO_PI * x)
+                y += k * math.sin(TWO_PI * x) + epsilon * math.sin(5 * TWO_PI * x)
                 x %= 1
                 x = (x + y) % 1
                 if n >= transient and y_window[0] <= y <= y_window[1]:
@@ -260,9 +260,9 @@ for epsilon in EPSILON_VALUES:
         print(f"wrote {filename.name}")
 
 manifest = {
-    "version": "0.2",
-    "formula": "y' = y + K/(2π) sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
-    "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(4π²) cos(2πx) - epsilon/(10π) cos(10πx)",
+    "version": "0.3",
+    "formula": "y' = y + K sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
+    "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(2π) cos(2πx) - epsilon/(10π) cos(10πx)",
     "kValues": K_VALUES,
     "epsilonValues": EPSILON_VALUES,
     "beta": {
