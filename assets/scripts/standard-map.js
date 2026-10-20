@@ -155,10 +155,13 @@
     [yWindow[0], 0, yWindow[1]].forEach((y) => context.fillText(y.toFixed(2), plot.left - 6, yToPixel(y) + 4));
     const panelWidth = currentData.phase.spritePanelWidth;
     const panelHeight = currentData.phase.spritePanelHeight;
+    const spriteColumns = currentData.phase.spriteColumns || 1;
+    const spriteColumn = currentData.phase.spriteIndex % spriteColumns;
+    const spriteRow = Math.floor(currentData.phase.spriteIndex / spriteColumns);
     context.drawImage(
       currentData.phase.image,
-      currentData.phase.spriteIndex * panelWidth,
-      0,
+      spriteColumn * panelWidth,
+      spriteRow * panelHeight,
       panelWidth,
       panelHeight,
       plot.left,
