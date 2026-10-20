@@ -16,12 +16,16 @@ from pathlib import Path
 OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "data" / "standard-map"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-K_VALUES = [round(index * 0.05, 2) for index in range(21)]
-EPSILON_VALUES = [round(index * 0.05, 2) for index in range(21)]
+K_VALUES = [round(index / 8, 3) for index in range(9)]
+EPSILON_VALUES = [round(index * 0.1 / 8, 4) for index in range(9)]
 PERIOD = 32
 P_VALUES = list(range(-PERIOD // 2, PERIOD // 2 + 1))
 TWO_PI = 2 * math.pi
 SOLVER_TOLERANCE = 1e-7
+# The numerical minimisation is carried out independently at each sampled
+# rotation number. This small positive floor makes the displayed discrete
+# curve strictly convex while moving it as little as possible in L2.
+STRICT_CONVEX_CURVATURE = 1e-8
 
 
 def rounded(value: float, digits: int = 7) -> float:
@@ -89,6 +93,64 @@ def solve_linear_system(matrix: list[list[float]], rhs: list[float]) -> list[flo
             value -= augmented[row][column] * result[column]
         result[row] = value / augmented[row][row]
     return result
+
+
+def second_difference(values: list[float], index: int) -> float:
+    return values[index] - 2 * values[index + 1] + values[index + 2]
+
+
+def second_difference_gram(left: int, right: int) -> float:
+    """Inner product of two consecutive-second-difference rows."""
+    left_row = {left: 1.0, left + 1: -2.0, left + 2: 1.0}
+    right_row = {right: 1.0, right + 1: -2.0, right + 2: 1.0}
+    return sum(left_row.get(index, 0.0) * right_row.get(index, 0.0) for index in left_row)
+
+
+def strictly_convex_projection(values: list[float]) -> list[float]:
+    """Return the closest sampled curve with a positive second difference.
+
+    This is the Euclidean projection onto
+    ``value[i] - 2 value[i + 1] + value[i + 2] >= STRICT_CONVEX_CURVATURE``.
+    The small positive lower bound gives a concrete, closed version of
+    "strictly convex", for which a closest point exists.
+    """
+    active: list[int] = []
+    count = len(values)
+
+    for _ in range(4 * count):
+        while active:
+            gram = [[second_difference_gram(left, right) for right in active] for left in active]
+            rhs = [STRICT_CONVEX_CURVATURE - second_difference(values, index) for index in active]
+            multipliers = solve_linear_system(gram, rhs)
+            if multipliers is None:
+                raise RuntimeError("The strictly convex fitting system became singular.")
+            negative = [position for position, multiplier in enumerate(multipliers) if multiplier < -1e-12]
+            if not negative:
+                break
+            del active[negative[0]]
+
+        fitted = values[:]
+        if active:
+            for index, multiplier in zip(active, multipliers):
+                fitted[index] += multiplier
+                fitted[index + 1] -= 2 * multiplier
+                fitted[index + 2] += multiplier
+
+        violated = [
+            index
+            for index in range(count - 2)
+            if second_difference(fitted, index) < STRICT_CONVEX_CURVATURE - 1e-12
+        ]
+        if not violated:
+            return fitted
+
+        most_violated = min(violated, key=lambda index: second_difference(fitted, index))
+        if most_violated in active:
+            raise RuntimeError("The strictly convex fitting system did not converge.")
+        active.append(most_violated)
+        active.sort()
+
+    raise RuntimeError("The strictly convex fitting system exceeded its iteration limit.")
 
 
 def newton_refine(x: list[float], p: int, k: float, epsilon: float) -> tuple[list[float], float, list[float], float]:
@@ -216,8 +278,23 @@ def minimise_action(p: int, k: float, epsilon: float) -> tuple[float, float]:
 
 
 def phase_portrait(k: float, epsilon: float) -> dict[str, object]:
-    points: list[float] = []
+    trajectories: list[list[float]] = []
+    initial_y_values: list[float] = []
     y_window = [-1.25, 1.25]
+
+    if k == 0 and epsilon == 0:
+        for y in [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1]:
+            trajectories.append([coordinate for x in range(21) for coordinate in (x / 20, y)])
+            initial_y_values.append(y)
+        return {
+            "trajectories": trajectories,
+            "initialY": initial_y_values,
+            "yWindow": y_window,
+            "transient": 0,
+            "displayedIterations": 20,
+            "trajectoryCount": len(trajectories),
+        }
+
     x_seeds = 10
     y_seeds = [-0.6, -0.3, 0, 0.3, 0.6]
     transient = 50
@@ -227,19 +304,23 @@ def phase_portrait(k: float, epsilon: float) -> dict[str, object]:
         for initial_y in y_seeds:
             x = (x_index + 0.5) / x_seeds
             y = initial_y
+            trajectory: list[float] = []
             for n in range(transient + displayed_iterations):
                 y += k * math.sin(TWO_PI * x) + epsilon * math.sin(5 * TWO_PI * x)
                 x %= 1
                 x = (x + y) % 1
-                if n >= transient and y_window[0] <= y <= y_window[1]:
-                    points.extend((rounded(x, 6), rounded(y, 6)))
+                if n >= transient:
+                    trajectory.extend((rounded(x, 6), rounded(y, 6)))
+            trajectories.append(trajectory)
+            initial_y_values.append(initial_y)
 
     return {
-        "points": points,
+        "trajectories": trajectories,
+        "initialY": initial_y_values,
         "yWindow": y_window,
         "transient": transient,
         "displayedIterations": displayed_iterations,
-        "seedCount": x_seeds * len(y_seeds),
+        "trajectoryCount": len(trajectories),
     }
 
 
@@ -247,12 +328,20 @@ for epsilon in EPSILON_VALUES:
     for k in K_VALUES:
         result_by_abs_p = {abs(p): minimise_action(abs(p), k, epsilon) for p in P_VALUES}
         omega = [rounded(p / PERIOD, 8) for p in P_VALUES]
-        value = [rounded(result_by_abs_p[abs(p)][0], 9) for p in P_VALUES]
+        raw_value = [rounded(result_by_abs_p[abs(p)][0], 9) for p in P_VALUES]
+        value = [rounded(entry, 12) for entry in strictly_convex_projection(raw_value)]
         residual = [rounded(result_by_abs_p[abs(p)][1], 12) for p in P_VALUES]
         data = {
             "k": k,
             "epsilon": epsilon,
-            "beta": {"omega": omega, "value": value, "residual": residual, "period": PERIOD},
+            "beta": {
+                "omega": omega,
+                "rawValue": raw_value,
+                "value": value,
+                "curvatureFloor": STRICT_CONVEX_CURVATURE,
+                "residual": residual,
+                "period": PERIOD,
+            },
             "phase": phase_portrait(k, epsilon),
         }
         filename = OUT_DIR / f"k-{k:.4f}-e-{epsilon:.4f}.json"
@@ -260,7 +349,7 @@ for epsilon in EPSILON_VALUES:
         print(f"wrote {filename.name}")
 
 manifest = {
-    "version": "0.3",
+    "version": "0.7",
     "formula": "y' = y + K sin(2πx) + epsilon sin(10πx), x' = x + y' mod 1",
     "generatingFunction": "S_(K,epsilon)(x,X) = 1/2 (X-x)^2 - K/(2π) cos(2πx) - epsilon/(10π) cos(10πx)",
     "kValues": K_VALUES,
@@ -269,6 +358,8 @@ manifest = {
         "period": PERIOD,
         "solverTolerance": SOLVER_TOLERANCE,
         "method": "Multi-start gradient descent for the finite-period action; smallest action retained.",
+        "displayCurve": "Least-squares projection of the sampled values onto a strictly convex discrete curve.",
+        "curvatureFloor": STRICT_CONVEX_CURVATURE,
         "caveat": "Finite-period numerical approximation only; not a certification of Mather's beta function.",
     },
     "phase": {
