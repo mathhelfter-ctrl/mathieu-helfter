@@ -1,299 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="description" content="Mathieu Helfter - Postdoctoral researcher in mathematics (dynamical systems, renormalization, geometric measure theory) at IST Austria.">
-  <meta name="keywords" content="helfter, mathieu helfter, helfter math, mathieu, mathieu helfter maths, Mathieu Helfter, maths, math, scales, diffeomorphism, mathematics, dynamical systems, renormalization, IST Austria, geometric measure theory">
-  <meta name="author" content="Mathieu Helfter">
   <meta charset="UTF-8">
-  <title>Mathieu Helfter | Postdoc, IST Austria</title>
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f9f7fc;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-    }
-
-    nav {
-      background: #4b3b85;
-      padding: 0.7em 2em;
-      text-align: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    nav a {
-      color: white;
-      margin: 0 1em;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-
-    header {
-      background-color: #e6def6;
-      padding: 2em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 2em;
-    }
-    header img {
-      border-radius: 50%;
-      width: 160px;
-      height: 160px;
-      object-fit: cover;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    header .intro {
-      max-width: 600px;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2em;
-      color: #4b3b85;
-    }
-    header p {
-      margin: 0.5em 0;
-      font-size: 1.1em;
-    }
-
-    main {
-      padding: 2em;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    h2 {
-      color: #4b3b85;
-      margin-top: 1.5em;
-      border-bottom: 2px solid #d4c6f2;
-      padding-bottom: 0.3em;
-    }
-
-    .publication-list {
-      margin-top: 1em;
-    }
-    .publication {
-      margin-bottom: 1.2em;
-      padding-bottom: 0.8em;
-      border-bottom: 1px solid #ddd;
-    }
-    .publication strong {
-      color: #4b3b85;
-    }
-    .pub-links {
-      font-size: 0.9em;
-    }
-    .pub-links a {
-      margin-right: 0.8em;
-      color: #4b3b85;
-    }
-
-    .learning-link {
-      display: inline-block;
-      margin-top: 0.6em;
-      padding: 0.38em 0.8em;
-      border: 1px solid #4b3b85;
-      border-radius: 999px;
-      background: #fff;
-      color: #4b3b85;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .learning-link:hover {
-      background: #4b3b85;
-      color: #fff;
-      text-decoration: none;
-    }
-    .learning-link:focus-visible {
-      outline: 3px solid #d4c6f2;
-      outline-offset: 3px;
-    }
-
-    .learn-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.2em;
-      margin-top: 1em;
-    }
-    .learn-card {
-      padding: 1.2em;
-      border: 1px solid #d4c6f2;
-      border-radius: 8px;
-      background: #f0ebfa;
-    }
-    .learn-card h3 {
-      margin-top: 0;
-      color: #4b3b85;
-    }
-    section[id] {
-      scroll-margin-top: 4.5em;
-    }
-
-    .contact, .links {
-      margin-top: 2em;
-      font-size: 1em;
-      background: #f0ebfa;
-      padding: 1em;
-      border-radius: 8px;
-    }
-
-    a {
-      color: #4b3b85;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mathieu Helfter, postdoctoral researcher in mathematics at ISTA.">
+  <title>Mathieu Helfter | Mathematics</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <details class="site-menu">
+    <summary aria-label="Main navigation"><span class="menu-icon" aria-hidden="true"></span>Menu</summary>
+    <nav aria-label="Main navigation">
+      <a href="index.html" aria-current="page">Welcome</a>
+      <a href="research.html">Research</a>
+      <a href="contact.html">Contact &amp; links</a>
+    </nav>
+  </details>
 
-<nav>
-  <a href="#aboutme">About me</a>
-  <a href="#wip">In preparation</a>
-  <a href="#publications">(Pre-)Publications</a>
-  <a href="#links">Links</a>
-  <a href="#contact">Contact</a>
-</nav>
-
-<header>
-  <img src="pp_mh.jpg" alt="Mathieu Helfter">
-  <div class="intro">
-    <h1>Mathieu Helfter</h1>
-    <p>Postdoctoral Researcher, Kaloshin Group</p>
-    <p>Institute of Science and Technology Austria (ISTA)</p>
-  </div>
-</header>
-
-<main>
-  <section id="aboutme">
-    <h2>About me</h2>
-    <p>
-      I am a post-doctoral researcher at ITSA with Vadim Kaloshin since October 2024. Beforehand I completed my Phd thesis on "Complexity and bifurcation of the identity" under the supervision of Pierre Berger at IMJ-PRG, Sorbonne Université and CNRS.
-      I am interested various subjects of dynamical systems and probabilities, most importantly (multi) fractals in infinite dimensions, spectral rigidity of standard and billard maps, ergodicity, renormalization of smooth diffeomorphism, geometric measure theory.
-    </p>
-  </section>
-
-  <section id="wip">
-    <div class="wip-list">
-      <h2>Works in preparation</h2>
-      <div class="wip">
-        <strong>Infinite dimensional multifractal analysis of product measures.</strong>
-      </div>
-      <div class="wip">
-        <strong>Multifractal analysis of Guassian measures on Hilbert spaces.</strong>
+  <header class="hero">
+    <div class="hero-inner">
+      <img src="pp_mh.jpg" alt="Mathieu Helfter">
+      <div>
+        <p class="eyebrow">Postdoctoral researcher · ISTA</p>
+        <h1>Mathieu Helfter</h1>
+        <p>I work on dynamical systems, probability, and geometric measure theory, with particular interests in infinite-dimensional fractals, multifractal analysis, and rigidity phenomena.</p>
       </div>
     </div>
-  </section>
+  </header>
 
-  <section id="publications">
-    <h2>(Pre-)publications</h2>
+  <main class="page-content">
+    <section id="learn" aria-labelledby="learn-heading">
+      <h2 id="learn-heading">Learn more playfully</h2>
+      <p>These short interactive modules give visual entry points into ideas connected with my research.</p>
 
-    <div class="publication-list">
-      <div class="publication">
-        <strong>5. Jet rigidity of Mather's β-function and complexified KAM curves holomorphic in potential for analytic standard maps</strong><br>
-        <em>preprint.</em>, 2026.<br>
-        <span class="pub-links">
-          <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank">arXiv</a>
-        </span><br>
-        <a class="learning-link" href="#learn-standard-map">Learn more playfully</a>
+      <div class="learn-grid">
+        <article class="learn-card">
+          <h3>The standard map: KAM curves and Mather's β-function</h3>
+          <p>Explore the effect of the standard-map parameter on a phase portrait and on a precomputed numerical approximation of Mather's β-function.</p>
+          <a class="button-link" href="standard-map.html">Learn more playfully</a>
+        </article>
+
+        <article class="learn-card">
+          <h3>Fractals and multifractals in infinite dimensions</h3>
+          <p>Explore cylinder projections, product measures, and scale-dependent quantities: tools that replace a single ordinary dimension in infinite-dimensional settings.</p>
+          <a class="button-link" href="infinite-fractals.html">Learn more playfully</a>
+        </article>
       </div>
+    </section>
+  </main>
 
-      <div class="publication">
-        <strong>4. Infinite Dimensional Multifractal Analysis of the Wiener measure</strong><br>
-        with A.H. Fan.<br>
-        <em>submitted.</em>, 2025.<br>
-        <span class="pub-links">
-          <a href="https://arxiv.org/abs/2512.06984" target="_blank">arXiv</a>
-        </span><br>
-        <a class="learning-link" href="#learn-infinite-dimensional-fractals">Learn more playfully</a>
-      </div>
-
-      <div class="publication">
-        <strong>3. Sets with arbitrary Hausdorff and packing scales in infinite dimensional Banach spaces</strong><br>
-        <em>Journal of Fractal geometry</em>, 2025.<br>
-        <span class="pub-links">
-          <a href="https://ems.press/journals/jfg/articles/14299261" target="_blank">DOI</a>
-          <a href="https://arxiv.org/abs/2502.09643" target="_blank">arXiv</a>
-        </span><br>
-        <a class="learning-link" href="#learn-infinite-dimensional-fractals">Learn more playfully</a>
-      </div>
-
-      <div class="publication">
-        <strong>2. Scales</strong><br>
-        <em>Mathematische Zeitschrift</em>, 2025.<br>
-        <span class="pub-links">
-          <a href="https://doi.org/10.1007/s00209-025-03719-5" target="_blank">DOI</a>
-          <a href="https://arxiv.org/abs/2206.05231" target="_blank">arXiv</a>
-        </span>
-      </div>
-
-      <div class="publication">
-        <strong>1. Every diffeomorphism is a total renormalization of a close to identity map</strong><br>
-        with P. Berger and N. Gourmelon.<br>
-        <em>Inventiones mathematicae</em>, 2024.<br>
-        <span class="pub-links">
-          <a href="https://doi.org/10.1007/s00222-024-01305-w" target="_blank">DOI</a>
-          <a href="https://arxiv.org/abs/2105.09721" target="_blank">arXiv</a>
-        </span>
-      </div>
-    </div>
-  </section>
-
-  <section id="learn">
-    <h2>Learn more playfully</h2>
-
-    <div class="learn-grid">
-      <article id="learn-standard-map" class="learn-card">
-        <h3>The standard map: KAM curves and Mather's β-function</h3>
-        <p>Explore how the phase portrait changes with the parameter, and compare it with a numerical view of the associated β-function.</p>
-      </article>
-
-      <article id="learn-infinite-dimensional-fractals" class="learn-card">
-        <h3>Fractals and multifractals in infinite dimensions</h3>
-        <p>Use finite coordinate projections and scale-dependent quantities to explore why infinite-dimensional fractals require more than a single ordinary dimension.</p>
-      </article>
-    </div>
-  </section>
-
-  <section id="sc-content">
-    <h2>Other scientific content</h2>
-
-    <div class="sc-content">
-      <strong>Près d’une dynamique stagnante, avec le temps et une loupe, tout peut arriver</strong><br>
-      Scientific actually, in French, for "Lettres de l'INSMI" with Pierre Berger and Nicolas Gourmelon on our article "Every diffeomorphism is a total renormalization of a close to identity map".
-      <span class="pub-links">
-        <a href="https://www.insmi.cnrs.fr/fr/cnrsinfo/pres-dune-dynamique-stagnante-avec-le-temps-et-une-loupe-tout-peut-arriver" target="_blank">Link</a>
-      </span>
-    </div>
-  </section>
-
-  <section id="links" class="links">
-    <h2>Links</h2>
-    <p>
-      <a href="CV.pdf" target="_blank">Download CV (PDF)</a> •
-      <a href="https://scholar.google.com/citations?user=J4V-EhoAAAAJ&hl=en" target="_blank">Google Scholar</a> •
-      <a href="https://www.researchgate.net/profile/Mathieu-Helfter" target="_blank">ResearchGate</a>
-    </p>
-  </section>
-
-  <section id="contact" class="contact">
-    <h2>Contact</h2>
-    <p>Email: <a href="mailto:Mathieu.Helfter@ist.ac.at">Mathieu.Helfter ' at ' ist.ac.at</a></p>
-    <p>
-      Address:<br>
-      Institute of Science and Technology Austria (ISTA)<br>
-      Am Campus 1<br>
-      3400 Klosterneuburg, Austria
-    </p>
-  </section>
-</main>
-
+  <footer>Mathieu Helfter · Institute of Science and Technology Austria</footer>
 </body>
 </html>
