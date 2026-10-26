@@ -51,6 +51,7 @@
   const BETA_INTERPOLATION_SAMPLES = 8;
   const PHASE_RATE_MIN = 0.05;
   const PHASE_RATE_MAX = 60;
+  const PHASE_INTERPOLATION_MAX_RATE = 10;
   const BETA_OPTIONS_BY_PHASE_SAMPLING = {
     16: { period: 12, minStarts: 2, maxStarts: 2, maxIterations: 80 },
     32: { period: 20, minStarts: 2, maxStarts: 2, maxIterations: 100 },
@@ -274,7 +275,17 @@
   }
 
   function phaseUsesInterpolation() {
-    return phaseFrameRate() > 0;
+    const rate = phaseFrameRate();
+    return rate > 0 && rate <= PHASE_INTERPOLATION_MAX_RATE;
+  }
+
+  function phaseHoldPortion() {
+    const ratePosition = clamp(
+      (phaseFrameRate() - PHASE_RATE_MIN) / (PHASE_INTERPOLATION_MAX_RATE - PHASE_RATE_MIN),
+      0,
+      1
+    );
+    return 0.75 - 0.5 * ratePosition;
   }
 
   function updateDisplayRateOutput() {
@@ -292,9 +303,12 @@
 
   function updatePhaseReadout() {
     const rate = phaseFrameRate();
-    const rateNote = phaseUsesInterpolation()
-      ? " The portrait updates at " + (rate < 1 ? rate.toFixed(2) : rate < 10 ? rate.toFixed(1) : Math.round(rate)) + " fps and interpolates between computed portraits."
-      : " Automatic phase-portrait updates are paused.";
+    const formattedRate = rate < 1 ? rate.toFixed(2) : rate < 10 ? rate.toFixed(1) : Math.round(rate);
+    const rateNote = rate === 0
+      ? " Automatic phase-portrait updates are paused."
+      : rate > PHASE_INTERPOLATION_MAX_RATE
+        ? " The portrait updates at " + formattedRate + " fps without interpolation."
+        : " The portrait updates at " + formattedRate + " fps and interpolates between computed portraits.";
     phaseReadout.textContent = phaseCurveCount() + " uniform initial conditions on x = 0.5, each followed for 2,000 iterates; y ∈ [−0.30, 0.30]. Colour follows the initial y: red, through plum, to deep blue." + rateNote + " Scroll to zoom; drag to move the view.";
   }
 
@@ -307,6 +321,21 @@
       phaseTransition = null;
       phaseDisplayed = phaseData;
       drawPhase();
+
+      // The β plot follows the same display-rate policy as the portrait:
+      // at paused or high refresh rates it should show the latest computed
+      // curve directly, rather than completing an obsolete transition.
+      if (betaTransition) {
+        window.cancelAnimationFrame(betaTransitionFrame);
+        betaDisplayed = betaData;
+        if (betaTransition.viewTo) {
+          betaView = { ...betaTransition.viewTo };
+          betaViews[betaDisplayMode] = { ...betaView };
+        }
+        betaTransition = null;
+        betaTransitionFrame = 0;
+        drawBeta(betaDisplayed);
+      }
     } else if (phaseTransition && phaseData) {
       window.cancelAnimationFrame(phaseTransitionFrame);
       phaseTransition = {
@@ -940,10 +969,12 @@
     }));
   }
 
-  function phaseInterpolationProgress(progress) {
+  function delayedInterpolationProgress(progress, holdPortion = 0.75) {
     const elapsed = clamp(progress, 0, 1);
-    const remaining = 1 - elapsed;
-    return 1 - remaining * remaining * Math.exp(-2 * elapsed);
+    if (elapsed <= holdPortion) return 0;
+    const transitionProgress = (elapsed - holdPortion) / (1 - holdPortion);
+    const remaining = 1 - transitionProgress;
+    return 1 - remaining * remaining * Math.exp(-2 * transitionProgress);
   }
 
   function animatePhaseTransition(now) {
@@ -955,7 +986,7 @@
     phaseDisplayed = interpolatePhaseData(
       phaseTransition.from,
       phaseTransition.to,
-      phaseInterpolationProgress(progress)
+      delayedInterpolationProgress(progress, phaseHoldPortion())
     );
     drawPhase(phaseDisplayed);
     if (progress < 1) {
@@ -1000,14 +1031,15 @@
       return;
     }
     const progress = clamp((now - betaTransition.startedAt) / BETA_TRANSITION_DURATION, 0, 1);
-    betaDisplayed = interpolateBetaData(betaTransition.from, betaTransition.to, progress);
+    const interpolationProgress = delayedInterpolationProgress(progress, phaseHoldPortion());
+    betaDisplayed = interpolateBetaData(betaTransition.from, betaTransition.to, interpolationProgress);
     if (betaTransition.viewTo) {
       const { viewFrom, viewTo } = betaTransition;
       betaView = {
-        xMin: viewFrom.xMin + progress * (viewTo.xMin - viewFrom.xMin),
-        xMax: viewFrom.xMax + progress * (viewTo.xMax - viewFrom.xMax),
-        yMin: viewFrom.yMin + progress * (viewTo.yMin - viewFrom.yMin),
-        yMax: viewFrom.yMax + progress * (viewTo.yMax - viewFrom.yMax)
+        xMin: viewFrom.xMin + interpolationProgress * (viewTo.xMin - viewFrom.xMin),
+        xMax: viewFrom.xMax + interpolationProgress * (viewTo.xMax - viewFrom.xMax),
+        yMin: viewFrom.yMin + interpolationProgress * (viewTo.yMin - viewFrom.yMin),
+        yMax: viewFrom.yMax + interpolationProgress * (viewTo.yMax - viewFrom.yMax)
       };
       betaViews[betaDisplayMode] = { ...betaView };
     }
@@ -1031,7 +1063,7 @@
     window.cancelAnimationFrame(betaTransitionFrame);
     const targetView = betaAutoCenterLocked ? betaAutoCenterTarget(result) : null;
     if (targetView) betaYBounds[betaDisplayMode] = [targetView.yMin, targetView.yMax];
-    if (!current || current.value.length !== result.value.length) {
+    if (!phaseUsesInterpolation() || !current || current.value.length !== result.value.length) {
       betaTransition = null;
       betaDisplayed = result;
       if (targetView) {
