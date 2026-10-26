@@ -42,7 +42,10 @@
           <button id="phase-reset-view" class="text-button plot-reset-button" type="button" aria-label="Reset the phase-portrait view" title="Reset view"><span class="standard-map-symbol" aria-hidden="true">↻</span></button>
         </div>
         <svg id="phase-svg" role="img" aria-label="Vector phase portrait for the selected standard-map parameter"></svg>
-        <p id="phase-readout" class="plot-readout">32 uniform initial conditions on \(x=0.5\), each followed for 2,000 iterates; \(y\in[-0.30,0.30]\). Colour follows the initial \(y\): red, through plum, to deep blue. Scroll to zoom; drag to move the view.</p>
+        <details class="plot-info">
+          <summary>Info</summary>
+          <p id="phase-readout" class="plot-readout">32 uniform initial conditions on \(x=0.5\), each followed for 2,000 iterates; \(y\in[-0.30,0.30]\). Colour follows the initial \(y\): red, through plum, to deep blue. Scroll to zoom; drag to move the view.</p>
+        </details>
       </article>
 
       <article class="module-panel">
@@ -59,60 +62,55 @@
           </div>
         </div>
         <canvas id="beta-canvas" role="img" aria-label="Numerical beta difference or beta-derivative plot for the selected standard-map potential"></canvas>
-        <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5. Scroll to zoom; drag to move the view.</p>
+        <details class="plot-info">
+          <summary>Info</summary>
+          <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5. Scroll to zoom; drag to move the view.</p>
+        </details>
       </article>
     </section>
 
     <section class="module-controls" aria-label="Standard-map controls">
-      <div class="standard-map-control-group standard-map-global-control-group">
+      <div class="standard-map-controls-primary">
         <div class="standard-map-global-actions" aria-label="All Fourier modes">
           <button id="standard-map-play-all" class="text-button standard-map-icon-button" type="button" aria-label="Play all Fourier modes" title="Play all"><span class="standard-map-symbol" aria-hidden="true">▶</span></button>
           <button id="standard-map-pause-all" class="text-button standard-map-icon-button" type="button" aria-label="Pause all Fourier modes" title="Pause all"><span class="standard-map-symbol" aria-hidden="true">⏸</span></button>
           <button id="standard-map-reset-all" class="text-button standard-map-icon-button" type="button" aria-label="Reset all Fourier coefficients" title="Reset all"><span class="standard-map-symbol" aria-hidden="true">↻</span></button>
         </div>
-      </div>
-      <div class="standard-map-control-group standard-map-display-group">
-        <div class="standard-map-display-settings">
-          <div class="standard-map-quality-control">
-            <label for="standard-map-quality">Display quality</label>
-            <select id="standard-map-quality" aria-label="Phase-portrait and beta computation quality">
-              <option value="16">Very low · 16 curves, fastest β</option>
-              <option value="32" selected>Low · 32 curves, fast β</option>
-              <option value="64">Normal · 64 curves</option>
-              <option value="128">High · 128 curves, finer β</option>
-              <option value="256">Very high · 256 curves, finest β</option>
-            </select>
-          </div>
-          <div class="standard-map-quality-control">
-            <label for="standard-map-display-rate">Display rate <output id="standard-map-display-rate-output">0.50 fps</output></label>
-            <input id="standard-map-display-rate" class="standard-map-display-rate-slider" type="range" min="0" max="1" step="0.0001" value="0.3249" aria-label="Phase-portrait display rate on a logarithmic scale, from paused to 60 frames per second">
-          </div>
+        <div class="standard-map-quality-control">
+          <label for="standard-map-quality">Display quality</label>
+          <select id="standard-map-quality" aria-label="Phase-portrait and beta computation quality">
+            <option value="16">Very low · 16 curves, fastest β</option>
+            <option value="32" selected>Low · 32 curves, fast β</option>
+            <option value="64">Normal · 64 curves</option>
+            <option value="128">High · 128 curves, finer β</option>
+            <option value="256">Very high · 256 curves, finest β</option>
+          </select>
         </div>
-      </div>
-      <div class="standard-map-control-group standard-map-decay-group">
-        <div class="parameter-control">
-          <label for="standard-map-alpha">Polynomial decay of amplitude of coefficients \(\alpha\) = <output id="standard-map-alpha-output">1.500</output></label>
+        <div class="standard-map-quality-control">
+          <label for="standard-map-display-rate">Display rate <output id="standard-map-display-rate-output">0.50 fps</output></label>
+          <input id="standard-map-display-rate" class="standard-map-display-rate-slider" type="range" min="0" max="1" step="0.0001" value="0.3249" aria-label="Phase-portrait display rate on a logarithmic scale, from paused to 60 frames per second">
+        </div>
+        <div class="standard-map-alpha-control">
+          <label for="standard-map-alpha">\(\alpha=\) <output id="standard-map-alpha-output">1.500</output></label>
           <div class="standard-map-alpha-adjustment">
             <input id="standard-map-alpha" type="range" min="0" max="4" step="0.001" value="1.5" aria-label="Fourier normalisation exponent alpha">
             <button id="standard-map-auto-decay" class="text-button text-button--compact standard-map-auto-decay-button" type="button" title="Choose alpha from the selected Fourier modes">Auto</button>
           </div>
         </div>
       </div>
-      <div class="standard-map-control-group standard-map-random-group">
-        <div class="module-actions">
-          <input id="standard-map-random-count" type="number" inputmode="numeric" min="1" max="20" step="1" value="3" aria-label="Number of random Fourier modes">
-          <button id="standard-map-random-mode" class="text-button" type="button">Random m modes</button>
-          <span id="standard-map-status" aria-live="polite"></span>
-        </div>
-      </div>
-      <div class="standard-map-control-group standard-map-frequency-group">
+      <div class="standard-map-mode-choice-row">
         <div class="standard-map-add-mode">
           <label for="standard-map-new-mode">Add a Fourier mode \(n\)</label>
           <input id="standard-map-new-mode" type="number" inputmode="numeric" min="1" max="99" step="1" value="2" aria-label="Fourier mode number">
           <button id="standard-map-add-mode" class="text-button standard-map-add-button" type="button" aria-label="Add the selected Fourier mode"><span class="standard-map-symbol" aria-hidden="true">+</span></button>
         </div>
-        <div id="standard-map-added-modes" class="standard-map-added-modes" aria-live="polite"></div>
+        <div class="module-actions">
+          <input id="standard-map-random-count" type="number" inputmode="numeric" min="1" max="20" step="1" value="3" aria-label="Number of random Fourier modes">
+          <button id="standard-map-random-mode" class="text-button" type="button">Random m modes</button>
+        </div>
       </div>
+      <div id="standard-map-added-modes" class="standard-map-added-modes" aria-live="polite"></div>
+      <span id="standard-map-status" class="standard-map-status" aria-live="polite"></span>
     </section>
 
     <section>

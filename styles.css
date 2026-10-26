@@ -57,6 +57,69 @@ a:focus-visible {
   color: #f8f2ee;
 }
 
+@media (min-width: 801px) {
+  @supports selector(body:has(.site-sidebar:hover)) {
+    body {
+      grid-template-columns: 4.25rem minmax(0, 1fr);
+      transition: grid-template-columns 240ms ease;
+    }
+
+    body:has(.site-sidebar:hover),
+    body:has(.site-sidebar:focus-within) {
+      grid-template-columns: clamp(12.5rem, 17vw, 15.5rem) minmax(0, 1fr);
+    }
+
+    .site-sidebar {
+      position: relative;
+      overflow: hidden;
+      padding: 2.35rem 0.95rem 1.8rem;
+      transition: padding 240ms ease;
+    }
+
+    .site-sidebar::before {
+      display: grid;
+      position: absolute;
+      top: 2.35rem;
+      left: 0.95rem;
+      width: 2.25rem;
+      height: 2.25rem;
+      place-items: center;
+      border: 1px solid rgba(248, 242, 238, 0.38);
+      border-radius: 0.2rem;
+      color: #fffaf5;
+      content: "☰";
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .site-sidebar > * {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-0.5rem);
+      transition: opacity 160ms ease, transform 200ms ease;
+    }
+
+    body:has(.site-sidebar:hover) .site-sidebar,
+    body:has(.site-sidebar:focus-within) .site-sidebar {
+      padding: 2.6rem clamp(1.2rem, 2.2vw, 1.85rem) 2rem;
+    }
+
+    body:has(.site-sidebar:hover) .site-sidebar::before,
+    body:has(.site-sidebar:focus-within) .site-sidebar::before {
+      opacity: 0;
+      transform: translateX(-0.5rem);
+    }
+
+    body:has(.site-sidebar:hover) .site-sidebar > *,
+    body:has(.site-sidebar:focus-within) .site-sidebar > * {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+  }
+}
+
 .site-name {
   color: #fffaf5;
   font-size: clamp(1.55rem, 2.3vw, 2.05rem);
@@ -402,6 +465,23 @@ h2 {
   min-width: 0;
 }
 
+.standard-map-controls-primary,
+.standard-map-mode-choice-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.1rem;
+}
+
+.standard-map-alpha-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.standard-map-alpha-control label { white-space: nowrap; }
+
 #standard-map-alpha-output {
   display: inline-grid;
   width: 4.5rem;
@@ -622,6 +702,13 @@ h2 {
 
 .module-actions #standard-map-status:empty { display: none; }
 
+.standard-map-status {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.standard-map-status:empty { display: none; }
+
 #standard-map-random-count {
   width: 3.65rem;
   padding: 0.35rem 0.4rem;
@@ -795,7 +882,24 @@ h2 {
   font-size: 0.92rem;
 }
 
-.plot-readout { min-height: 1.6rem; margin: 0.55rem 0 0; }
+.plot-info { margin-top: 0.55rem; }
+
+.plot-info summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  color: var(--purple-dark);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.plot-info summary::-webkit-details-marker { display: none; }
+.plot-info summary::before { content: "ⓘ"; font-size: 1rem; font-weight: 400; }
+.plot-info[open] summary { color: var(--purple); }
+.plot-readout { margin: 0.4rem 0 0; }
 .numerical-caption { margin-top: 1rem; }
 .back-link { display: inline-block; margin-top: 1rem; }
 
