@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="An interactive introduction to a two-parameter standard map, KAM curves, and Mather's beta-function.">
+  <meta name="description" content="An interactive numerical exploration of Fourier potentials, standard-map phase portraits, and Mather's beta-function.">
   <title>The standard map | Mathieu Helfter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="styles.css">
   <script src="assets/scripts/mathjax-config.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script defer src="assets/scripts/standard-map-core.js"></script>
+  <script defer src="assets/scripts/standard-map.js"></script>
 </head>
 <body>
   <aside class="site-sidebar">
@@ -30,45 +32,97 @@
     <header class="page-heading">
       <p class="eyebrow">Interactive module</p>
       <h1>The standard map: KAM curves and Mather's \(\beta\)-function</h1>
-      <p>Move through discrete values of \(K\) and \(\varepsilon\), and compare a phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
+      <p>Choose a Fourier potential, then compare its computed phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
     </header>
-
-    <section class="module-controls" aria-label="Standard-map controls">
-      <div class="parameter-control">
-        <label for="standard-map-k">Parameter K = <output id="standard-map-k-value">Loading…</output></label>
-        <input id="standard-map-k" type="range" min="0" max="0" value="0" step="1" disabled>
-      </div>
-      <div class="parameter-control">
-        <label for="standard-map-epsilon">Parameter ε = <output id="standard-map-epsilon-value">Loading…</output></label>
-        <input id="standard-map-epsilon" type="range" min="0" max="0" value="0" step="1" disabled aria-label="Fine-scale perturbation epsilon">
-      </div>
-      <div class="module-actions">
-        <button id="standard-map-reset" class="text-button text-button--compact" type="button">Reset</button>
-        <span id="standard-map-status" aria-live="polite">Loading data…</span>
-      </div>
-    </section>
 
     <section class="module-panels" aria-label="Standard-map displays">
       <article class="module-panel">
-        <h2>Phase portrait</h2>
-        <canvas id="phase-canvas" role="img" aria-label="Phase portrait for the selected standard-map parameter"></canvas>
-        <p class="plot-readout">64 uniform initial conditions on x = 0.5, each followed for 6,000 iterates; y ∈ [-0.30, 0.30]. Colour follows the initial y: red, through plum, to deep blue.</p>
+        <div class="module-panel-heading">
+          <h2>Phase portrait</h2>
+          <button id="phase-reset-view" class="text-button plot-reset-button" type="button" aria-label="Reset the phase-portrait view" title="Reset view"><span class="standard-map-symbol" aria-hidden="true">↻</span></button>
+        </div>
+        <svg id="phase-svg" role="img" aria-label="Vector phase portrait for the selected standard-map parameter"></svg>
+        <p id="phase-readout" class="plot-readout">32 uniform initial conditions on \(x=0.5\), each followed for 2,000 iterates; \(y\in[-0.30,0.30]\). Colour follows the initial \(y\): red, through plum, to deep blue. Scroll to zoom; drag to move the view.</p>
       </article>
 
       <article class="module-panel">
-      <h2>Numerical \(\beta_V-\beta_0\)</h2>
-        <canvas id="beta-canvas" role="img" aria-label="Numerical beta difference plot for the selected standard-map parameter"></canvas>
-        <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5.</p>
+        <div class="module-panel-heading">
+          <div class="beta-display-choice" role="group" aria-label="Quantity shown in the beta graph">
+            <span class="beta-display-label">Numerical</span>
+            <button id="beta-derivative-button" class="beta-display-button" type="button" aria-pressed="false">\(\partial_\omega\)</button>
+            <span class="beta-display-expression">\(\bigl(\beta_V-\beta_0\bigr)\)</span>
+          </div>
+          <div class="module-panel-actions">
+            <button id="beta-autocenter-view" class="text-button plot-autocenter-button" type="button" title="Fit the vertical range to the current beta graph">Auto-centre</button>
+            <button id="beta-autocenter-lock" class="text-button standard-map-icon-button plot-autocenter-lock" type="button" aria-pressed="true" aria-label="Automatic beta centring is locked" title="Automatic beta centring is locked"><svg class="beta-lock-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path class="beta-lock-closed-shackle" d="M8 10V7a4 4 0 0 1 8 0v3"></path><path class="beta-lock-open-shackle" d="M9 10V7a4 4 0 0 1 7.6-2.4"></path><circle cx="12" cy="15" r="1.15"></circle><path d="M12 16.15v2.1"></path></svg></button>
+            <button id="beta-reset-view" class="text-button plot-reset-button" type="button" aria-label="Reset the beta-graph view" title="Reset view"><span class="standard-map-symbol" aria-hidden="true">↻</span></button>
+          </div>
+        </div>
+        <canvas id="beta-canvas" role="img" aria-label="Numerical beta difference or beta-derivative plot for the selected standard-map potential"></canvas>
+        <p id="beta-readout" class="plot-readout">Colour runs from red at ω = −0.5, through plum, to deep blue at ω = 0.5. Scroll to zoom; drag to move the view.</p>
       </article>
+    </section>
+
+    <section class="module-controls" aria-label="Standard-map controls">
+      <div class="standard-map-control-group standard-map-global-control-group">
+        <div class="standard-map-global-actions" aria-label="All Fourier modes">
+          <button id="standard-map-play-all" class="text-button standard-map-icon-button" type="button" aria-label="Play all Fourier modes" title="Play all"><span class="standard-map-symbol" aria-hidden="true">▶</span></button>
+          <button id="standard-map-pause-all" class="text-button standard-map-icon-button" type="button" aria-label="Pause all Fourier modes" title="Pause all"><span class="standard-map-symbol" aria-hidden="true">⏸</span></button>
+          <button id="standard-map-reset-all" class="text-button standard-map-icon-button" type="button" aria-label="Reset all Fourier coefficients" title="Reset all"><span class="standard-map-symbol" aria-hidden="true">↻</span></button>
+        </div>
+      </div>
+      <div class="standard-map-control-group standard-map-display-group">
+        <div class="standard-map-display-settings">
+          <div class="standard-map-quality-control">
+            <label for="standard-map-quality">Display quality</label>
+            <select id="standard-map-quality" aria-label="Phase-portrait and beta computation quality">
+              <option value="16">Very low · 16 curves, fastest β</option>
+              <option value="32" selected>Low · 32 curves, fast β</option>
+              <option value="64">Normal · 64 curves</option>
+              <option value="128">High · 128 curves, finer β</option>
+              <option value="256">Very high · 256 curves, finest β</option>
+            </select>
+          </div>
+          <div class="standard-map-quality-control">
+            <label for="standard-map-display-rate">Display rate <output id="standard-map-display-rate-output">0.50 fps</output></label>
+            <input id="standard-map-display-rate" class="standard-map-display-rate-slider" type="range" min="0" max="1" step="0.0001" value="0.3249" aria-label="Phase-portrait display rate on a logarithmic scale, from paused to 60 frames per second">
+          </div>
+        </div>
+      </div>
+      <div class="standard-map-control-group standard-map-decay-group">
+        <div class="parameter-control">
+          <label for="standard-map-alpha">Polynomial decay of amplitude of coefficients \(\alpha\) = <output id="standard-map-alpha-output">1.500</output></label>
+          <div class="standard-map-alpha-adjustment">
+            <input id="standard-map-alpha" type="range" min="0" max="4" step="0.001" value="1.5" aria-label="Fourier normalisation exponent alpha">
+            <button id="standard-map-auto-decay" class="text-button text-button--compact standard-map-auto-decay-button" type="button" title="Choose alpha from the selected Fourier modes">Auto</button>
+          </div>
+        </div>
+      </div>
+      <div class="standard-map-control-group standard-map-random-group">
+        <div class="module-actions">
+          <input id="standard-map-random-count" type="number" inputmode="numeric" min="1" max="20" step="1" value="3" aria-label="Number of random Fourier modes">
+          <button id="standard-map-random-mode" class="text-button" type="button">Random m modes</button>
+          <span id="standard-map-status" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="standard-map-control-group standard-map-frequency-group">
+        <div class="standard-map-add-mode">
+          <label for="standard-map-new-mode">Add a Fourier mode \(n\)</label>
+          <input id="standard-map-new-mode" type="number" inputmode="numeric" min="1" max="99" step="1" value="2" aria-label="Fourier mode number">
+          <button id="standard-map-add-mode" class="text-button standard-map-add-button" type="button" aria-label="Add the selected Fourier mode"><span class="standard-map-symbol" aria-hidden="true">+</span></button>
+        </div>
+        <div id="standard-map-added-modes" class="standard-map-added-modes" aria-live="polite"></div>
+      </div>
     </section>
 
     <section>
       <h2>A short explanation</h2>
-      <p>We consider a potential \(V\) of the form:</p>
+      <p>We start with the first Fourier mode, and may add further integer modes:</p>
       \[
-        V(x)=-\frac{K}{2\pi}\cos(2\pi x)-\frac{\varepsilon}{10\pi}\cos(10\pi x).
+        V_{\mathbf K,\alpha}(x)=-\sum_{n\geq1}\frac{K_n}{(2\pi n)^\alpha}\cos(2\pi n x).
       \]
-      <p>Move the sliders to move parameters \(K\) and \(\varepsilon\).</p>
+      <p>Keeping only the first mode, with its parameter \(K_1\), gives the usual Chirikov standard map. Type an integer \(1\leq n\leq99\) and press \(+\) to add \(K_n\).</p>
+      <p>The exponent \(\alpha\) controls the decay of the higher-frequency coefficients. It can be adjusted according to the chosen frequencies to make either the KAM portrait or the \(\beta\)-graph easier to read. <em>Auto</em> chooses a practical experimental balance from the selected Fourier modes.</p>
       <p>The corresponding dynamics are given by the 2D map</p>
       \[
         f(x,y)=\bigl(x+y+V'(x)\pmod 1,\;y+V'(x)\bigr).
@@ -78,15 +132,16 @@
         \beta_V\!\left(\frac pq\right)=\frac1q\min_{x_q=x_0+p}\sum_{n=0}^{q-1}
         \left[\frac12(x_{n+1}-x_n)^2+V(x_n)\right].
       \]
-      This extends to irrational \(\omega\) as a strictly convex continuous function. 
-      At \( V=0\) one has \( \beta_0 (\omega) = \omega^2/2)\). 
-      <p>Can one deduce \(V\) from \(\beta_V\)?</p>
+      <p>The left window is a phase portrait: every coloured trace follows one initial point under the map. A regular curve confines the orbit; gaps or island chains show how this organisation can break down. In particular, the loss of a rational invariant curve has a variational trace: \(\beta_V\) can develop a corner at the corresponding rational rotation number.</p>
+      <p>The right window shows the change \(\beta_V-\beta_0\) from the unperturbed system. Click \(\partial_\omega\) in its title to switch to its derivative; dashed joins are shown only when a slope jump is a strong local outlier of the numerical data, so they are candidates rather than certificates of a corner. The subscript \(0\) means the zero potential \(V=0\): this reference map is integrable, and \(\beta_0(\omega)=\omega^2/2\) is analytic. The summands in the definition above are called <em>actions</em>: they play a role analogous to that of distance for geodesics or chord length for billiard trajectories.</p>
+      <p>More generally, the regularity of \(\beta_V\) is closely related to the integrability of the dynamics. Thus the graph records both how the potential changes the least action needed to realise each average rotation and, through possible corners, how invariant curves can be lost.</p>
+      <p>The question we are interested in is:</p>
+      <p class="inverse-question">Can one deduce \(V\) from \(\beta\)?</p>
       <p>This inverse problem, in the spirit of Kac's celebrated question “Can one hear the shape of a drum?”, is treated in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
       <a class="back-link" href="index.html#learn">← Back to homepage</a>
     </section>
   </main>
 
   <footer>Mathieu Helfter · Institute of Science and Technology Austria</footer>
-  <script src="assets/scripts/standard-map.js"></script>
 </body>
 </html>
