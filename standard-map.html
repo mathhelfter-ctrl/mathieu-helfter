@@ -32,7 +32,7 @@
     <header class="page-heading">
       <p class="eyebrow">Interactive module</p>
       <h1>The standard map: KAM curves and Mather's \(\beta\)-function</h1>
-      <p>Choose a Fourier potential, then compare its computed phase portrait with a finite-period numerical approximation of Mather's \(\beta\)-function.</p>
+      <p>Choose a potential automatically or manually to look at its phase portrait and an approximation of Mather's \(\beta\)-function.</p>
     </header>
 
     <section class="module-panels" aria-label="Standard-map displays">
@@ -87,8 +87,8 @@
           </select>
         </div>
         <div class="standard-map-quality-control">
-          <label for="standard-map-display-rate">Display rate <output id="standard-map-display-rate-output">0.50 fps</output></label>
-          <input id="standard-map-display-rate" class="standard-map-display-rate-slider" type="range" min="0" max="1" step="0.0001" value="0.3249" aria-label="Phase-portrait display rate on a logarithmic scale, from paused to 60 frames per second">
+          <label for="standard-map-display-rate">Display rate <output id="standard-map-display-rate-output">3.0 fps</output></label>
+          <input id="standard-map-display-rate" class="standard-map-display-rate-slider" type="range" min="0" max="1" step="0.0001" value="0.5775" aria-label="Phase-portrait display rate on a logarithmic scale, from paused to 60 frames per second">
         </div>
         <div class="standard-map-alpha-control">
           <label for="standard-map-alpha">\(\alpha=\) <output id="standard-map-alpha-output">1.500</output></label>
@@ -105,8 +105,9 @@
           <button id="standard-map-add-mode" class="text-button standard-map-add-button" type="button" aria-label="Add the selected Fourier mode"><span class="standard-map-symbol" aria-hidden="true">+</span></button>
         </div>
         <div class="module-actions">
+          <button id="standard-map-random-mode" class="text-button" type="button">Random modes</button>
           <input id="standard-map-random-count" type="number" inputmode="numeric" min="1" max="20" step="1" value="3" aria-label="Number of random Fourier modes">
-          <button id="standard-map-random-mode" class="text-button" type="button">Random m modes</button>
+          <button id="standard-map-positive-only" class="text-button standard-map-positive-only" type="button" aria-pressed="false" title="Allow positive and negative parameters">Positive parameters only</button>
         </div>
       </div>
       <div id="standard-map-added-modes" class="standard-map-added-modes" aria-live="polite"></div>
@@ -134,7 +135,7 @@
       <p>The right window shows the change \(\beta_V-\beta_0\) from the unperturbed system. Click \(\partial_\omega\) in its title to switch to its derivative; dashed joins are shown only when a slope jump is a strong local outlier of the numerical data, so they are candidates rather than certificates of a corner. The subscript \(0\) means the zero potential \(V=0\): this reference map is integrable, and \(\beta_0(\omega)=\omega^2/2\) is analytic. The summands in the definition above are called <em>actions</em>: they play a role analogous to that of distance for geodesics or chord length for billiard trajectories.</p>
       <p>More generally, the regularity of \(\beta_V\) is closely related to the integrability of the dynamics. Thus the graph records both how the potential changes the least action needed to realise each average rotation and, through possible corners, how invariant curves can be lost.</p>
       <p>The question we are interested in is:</p>
-      <p class="inverse-question">Can one deduce \(V\) from \(\beta\)?</p>
+      <p class="inverse-question">Can one reconstruct \(V\) from \(\beta\)?</p>
       <p>This inverse problem, in the spirit of Kac's celebrated question “Can one hear the shape of a drum?”, is treated in <a href="https://doi.org/10.48550/arXiv.2609.15617" target="_blank" rel="noopener noreferrer">this paper</a>.</p>
       <a class="back-link" href="index.html#learn">← Back to homepage</a>
     </section>

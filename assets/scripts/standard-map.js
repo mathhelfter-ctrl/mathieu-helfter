@@ -10,6 +10,7 @@
   const addedModes = document.getElementById("standard-map-added-modes");
   const randomModeCountInput = document.getElementById("standard-map-random-count");
   const randomModeButton = document.getElementById("standard-map-random-mode");
+  const positiveParametersOnlyButton = document.getElementById("standard-map-positive-only");
   const status = document.getElementById("standard-map-status");
   const phaseSvg = document.getElementById("phase-svg");
   const phaseReadout = document.getElementById("phase-readout");
@@ -51,11 +52,11 @@
   const PHASE_RATE_MIN = 0.05;
   const PHASE_RATE_MAX = 60;
   const BETA_OPTIONS_BY_PHASE_SAMPLING = {
-    16: { period: 8, minStarts: 2, maxStarts: 2, maxIterations: 80 },
-    32: { period: 10, minStarts: 2, maxStarts: 2, maxIterations: 100 },
-    64: { period: 12, minStarts: 3, maxStarts: 3, maxIterations: 120 },
-    128: { period: 24, minStarts: 4, maxStarts: 10, maxIterations: 280 },
-    256: { period: 32, minStarts: 6, maxStarts: 18, maxIterations: 420 }
+    16: { period: 12, minStarts: 2, maxStarts: 2, maxIterations: 80 },
+    32: { period: 20, minStarts: 2, maxStarts: 2, maxIterations: 100 },
+    64: { period: 32, minStarts: 3, maxStarts: 3, maxIterations: 120 },
+    128: { period: 48, minStarts: 4, maxStarts: 10, maxIterations: 280 },
+    256: { period: 64, minStarts: 6, maxStarts: 18, maxIterations: 420 }
   };
   const modeControls = new Map();
   let betaData = null;
@@ -88,6 +89,7 @@
   let betaDrag = null;
   const oscillators = new Map();
   let globalPlayback = false;
+  let positiveParametersOnly = false;
   let automaticDecay = true;
   let oscillationFrame = 0;
   let oscillationLastPhase = -Infinity;
@@ -142,7 +144,8 @@
     betaDisplayMode = mode;
     betaView = { ...betaViews[mode] };
     updateBetaDisplayButtons();
-    drawBeta();
+    if (betaAutoCenterLocked) autoCenterBetaView();
+    else drawBeta();
   }
 
   function formatAxisValue(value, digits = 3) {
@@ -256,6 +259,15 @@
     return PHASE_RATE_MIN * Math.pow(PHASE_RATE_MAX / PHASE_RATE_MIN, logarithmicPosition);
   }
 
+  function phaseRatePosition(rate) {
+    if (!Number.isFinite(rate) || rate <= 0) return 0;
+    return clamp(
+      Math.log(rate / PHASE_RATE_MIN) / Math.log(PHASE_RATE_MAX / PHASE_RATE_MIN),
+      0,
+      1
+    );
+  }
+
   function phaseUpdateInterval() {
     const framesPerSecond = phaseFrameRate();
     return framesPerSecond > 0 ? 1000 / framesPerSecond : Infinity;
@@ -284,6 +296,32 @@
       ? " The portrait updates at " + (rate < 1 ? rate.toFixed(2) : rate < 10 ? rate.toFixed(1) : Math.round(rate)) + " fps and interpolates between computed portraits."
       : " Automatic phase-portrait updates are paused.";
     phaseReadout.textContent = phaseCurveCount() + " uniform initial conditions on x = 0.5, each followed for 2,000 iterates; y ∈ [−0.30, 0.30]. Colour follows the initial y: red, through plum, to deep blue." + rateNote + " Scroll to zoom; drag to move the view.";
+  }
+
+  function applyDisplayRateChange() {
+    oscillationLastPhase = -Infinity;
+    updateDisplayRateOutput();
+    updatePhaseReadout();
+    if (!phaseUsesInterpolation()) {
+      window.cancelAnimationFrame(phaseTransitionFrame);
+      phaseTransition = null;
+      phaseDisplayed = phaseData;
+      drawPhase();
+    } else if (phaseTransition && phaseData) {
+      window.cancelAnimationFrame(phaseTransitionFrame);
+      phaseTransition = {
+        from: phaseDisplayed || phaseData,
+        to: phaseData,
+        duration: phaseUpdateInterval(),
+        startedAt: currentTime()
+      };
+      phaseTransitionFrame = window.requestAnimationFrame(animatePhaseTransition);
+    }
+  }
+
+  function setPhaseDisplayRate(rate) {
+    displayRate.value = String(phaseRatePosition(rate));
+    applyDisplayRateChange();
   }
 
   function makeIconButton(symbol, label) {
@@ -325,6 +363,20 @@
     globalPlayback = playing;
     setPressed(playAllButton, playing);
     setPressed(pauseAllButton, !playing);
+    if (!playing) setPhaseDisplayRate(3);
+  }
+
+  function setPositiveParametersOnly(locked, recompute = true) {
+    positiveParametersOnly = locked;
+    setPressed(positiveParametersOnlyButton, locked);
+    const state = locked ? "locked" : "unlocked";
+    positiveParametersOnlyButton.setAttribute("aria-label", "Positive parameters only is " + state);
+    positiveParametersOnlyButton.title = "Positive parameters only is " + state;
+    if (locked) modes.forEach((value, mode) => setModeValue(mode, Math.abs(value)));
+    modeControls.forEach((control, mode) => {
+      if (!oscillators.has(mode)) renderStaticControl(control);
+    });
+    if (recompute) parameterChanged();
   }
 
   function renderStaticControl(control) {
@@ -333,13 +385,14 @@
     slider.id = "standard-map-k-" + mode;
     slider.className = "standard-map-parameter-slider";
     slider.type = "range";
-    slider.min = "-0.1";
+    slider.min = positiveParametersOnly ? "0" : "-0.1";
     slider.max = "0.1";
     slider.step = "0.0005";
     slider.value = String(modes.get(mode));
     slider.setAttribute("aria-label", "Fourier coefficient K " + mode);
     const sliderBox = document.createElement("div");
     sliderBox.className = "standard-map-slider-with-zero";
+    sliderBox.classList.toggle("is-positive-only", positiveParametersOnly);
     const zeroMark = document.createElement("span");
     zeroMark.className = "standard-map-zero-mark";
     zeroMark.setAttribute("aria-hidden", "true");
@@ -348,8 +401,7 @@
     control.slider = slider;
     setModePlaybackAppearance(control, false);
     slider.addEventListener("input", () => {
-      modes.set(mode, snapToZero(slider));
-      updateModeOutput(mode);
+      setModeValue(mode, snapToZero(slider));
       parameterChanged();
     });
   }
@@ -1057,7 +1109,7 @@
   }
 
   function setModeValue(mode, value) {
-    const coefficient = clamp(value, -0.1, 0.1);
+    const coefficient = clamp(value, positiveParametersOnly ? 0 : -0.1, 0.1);
     modes.set(mode, coefficient);
     const control = modeControls.get(mode);
     if (control?.slider) control.slider.value = String(coefficient);
@@ -1082,6 +1134,22 @@
     return candidates.slice(0, count).sort((left, right) => left - right);
   }
 
+  function oscillatingCoefficient(amplitude, angle) {
+    const coefficient = amplitude * Math.sin(angle);
+    return positiveParametersOnly ? Math.abs(coefficient) : coefficient;
+  }
+
+  function randomOscillationSetup() {
+    const amplitude = 0.01 + 0.09 * Math.random();
+    const phase = TWO_PI * Math.random();
+    return {
+      amplitude,
+      phase,
+      frequency: Math.round((0.001 + 0.099 * Math.random()) * 10000) / 10000,
+      coefficient: oscillatingCoefficient(amplitude, phase)
+    };
+  }
+
   function currentTime() {
     return window.performance?.now?.() ?? Date.now();
   }
@@ -1095,7 +1163,8 @@
   function updateOscillators(now) {
     oscillators.forEach((oscillator, mode) => {
       const elapsed = (now - oscillator.startedAt) / 1000;
-      setModeValue(mode, oscillator.amplitude * Math.sin(TWO_PI * oscillator.frequency * elapsed + oscillator.phase));
+      const angle = TWO_PI * oscillator.frequency * elapsed + oscillator.phase;
+      setModeValue(mode, oscillatingCoefficient(oscillator.amplitude, angle));
     });
   }
 
@@ -1129,9 +1198,10 @@
     const amplitude = Number.isFinite(control.initialAmplitude)
       ? control.initialAmplitude
       : clamp(Math.max(0.05, Math.abs(currentValue)), 0, 0.1);
+    const phaseArgument = currentValue / amplitude;
     const phase = Number.isFinite(control.initialPhase)
       ? control.initialPhase
-      : Math.asin(clamp(currentValue / amplitude, -1, 1));
+      : Math.asin(clamp(phaseArgument, -1, 1));
     const frequency = Number.isFinite(control.initialFrequency) ? control.initialFrequency : 0.01;
     control.initialFrequency = null;
     control.initialPhase = null;
@@ -1197,22 +1267,24 @@
   function selectRandomModes() {
     const count = normalisedRandomModeCount();
     pauseAllModes(false);
+    if (!globalPlayback) setPhaseDisplayRate(3);
     modeControls.clear();
     addedModes.replaceChildren();
     modes.clear();
     chooseRandomModes(count).forEach((mode) => {
-      modes.set(mode, 0);
+      const setup = randomOscillationSetup();
+      modes.set(mode, setup.coefficient);
       const control = createModeRow(mode);
-      control.initialFrequency = Math.round((0.001 + 0.099 * Math.random()) * 10000) / 10000;
-      control.initialPhase = TWO_PI * Math.random();
-      control.initialAmplitude = 0.01 + 0.09 * Math.random();
+      control.initialFrequency = setup.frequency;
+      control.initialPhase = setup.phase;
+      control.initialAmplitude = setup.amplitude;
     });
     refreshSuggestedMode();
     if (automaticDecay) applyAutomaticDecay();
     if (globalPlayback) playAllModes(false, false);
     status.textContent = globalPlayback
       ? "Selected " + count + " new random Fourier modes with random frequencies, phases, and amplitudes."
-      : "Selected " + count + " new random Fourier modes with random frequencies, phases, and amplitudes; none is playing.";
+      : "Selected " + count + " new random Fourier modes with random values, frequencies, phases, and amplitudes; none is playing.";
     parameterChanged();
   }
 
@@ -1230,26 +1302,7 @@
     schedulePhase(true);
     scheduleBeta(true);
   });
-  displayRate.addEventListener("input", () => {
-    oscillationLastPhase = -Infinity;
-    updateDisplayRateOutput();
-    updatePhaseReadout();
-    if (!phaseUsesInterpolation()) {
-      window.cancelAnimationFrame(phaseTransitionFrame);
-      phaseTransition = null;
-      phaseDisplayed = phaseData;
-      drawPhase();
-    } else if (phaseTransition && phaseData) {
-      window.cancelAnimationFrame(phaseTransitionFrame);
-      phaseTransition = {
-        from: phaseDisplayed || phaseData,
-        to: phaseData,
-        duration: phaseUpdateInterval(),
-        startedAt: currentTime()
-      };
-      phaseTransitionFrame = window.requestAnimationFrame(animatePhaseTransition);
-    }
-  });
+  displayRate.addEventListener("input", applyDisplayRateChange);
   alphaInput.addEventListener("input", () => {
     setAutomaticDecay(false);
     updateAlphaOutput();
@@ -1259,6 +1312,9 @@
   playAllButton.addEventListener("click", () => playAllModes());
   pauseAllButton.addEventListener("click", () => pauseAllModes(true, true));
   resetAllButton.addEventListener("click", resetAllModes);
+  positiveParametersOnlyButton.addEventListener("click", () => {
+    setPositiveParametersOnly(!positiveParametersOnly);
+  });
   randomModeCountInput.addEventListener("input", () => {
     if (Number(randomModeCountInput.value) > RANDOM_MODE_MAX) {
       randomModeCountInput.value = String(RANDOM_MODE_MAX);
@@ -1426,6 +1482,7 @@
   refreshSuggestedMode();
   setAutomaticDecay(true);
   applyAutomaticDecay();
+  setPositiveParametersOnly(false, false);
   setGlobalPlayback(false);
   updateDisplayRateOutput();
   updatePhaseReadout();
